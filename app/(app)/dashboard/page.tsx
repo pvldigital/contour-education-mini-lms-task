@@ -8,7 +8,7 @@ export default async function DashboardPage() {
   await requireStudent();
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6">
+    <div className="mx-auto flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Dashboard</h1>

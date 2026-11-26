@@ -5,15 +5,13 @@ import {
   getCoreRowModel,
   getSortedRowModel,
   useReactTable,
-  type Column,
   type ColumnDef,
   type SortingState,
 } from "@tanstack/react-table";
-import { ArrowUpDown } from "lucide-react";
 import { useState } from "react";
 
 import { ConsultationStatusBadge } from "@/components/consultation-status-badge";
-import { Button } from "@/components/ui/button";
+import { DataTableSortButton } from "@/components/data-table-sort-button";
 import {
   Table,
   TableBody,
@@ -29,33 +27,12 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
   timeStyle: "short",
 });
 
-function SortButton<TData>({
-  label,
-  column,
-}: {
-  label: string;
-  column: Column<TData, unknown>;
-}) {
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      className="-ml-3 h-8"
-      onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-    >
-      {label}
-      <ArrowUpDown className="ml-1 size-3.5" aria-hidden="true" />
-    </Button>
-  );
-}
-
 const columns: ColumnDef<AdminConsultation>[] = [
   {
     id: "student",
     accessorFn: (row) => `${row.first_name} ${row.last_name}`,
     header: ({ column }) => (
-      <SortButton label="Student" column={column} />
+      <DataTableSortButton label="Student" column={column} />
     ),
     cell: ({ row }) => (
       <div>
@@ -80,7 +57,7 @@ const columns: ColumnDef<AdminConsultation>[] = [
   {
     accessorKey: "scheduled_at",
     header: ({ column }) => (
-      <SortButton label="Scheduled" column={column} />
+      <DataTableSortButton label="Scheduled" column={column} />
     ),
     cell: ({ row }) => (
       <time
@@ -98,11 +75,6 @@ const columns: ColumnDef<AdminConsultation>[] = [
     cell: ({ row }) => (
       <ConsultationStatusBadge consultation={row.original} />
     ),
-  },
-  {
-    accessorKey: "completed",
-    header: "Completed",
-    cell: ({ row }) => (row.original.completed ? "Yes" : "No"),
   },
 ];
 

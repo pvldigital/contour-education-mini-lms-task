@@ -4,7 +4,7 @@ export default function AppLoading() {
       role="status"
       aria-busy="true"
       aria-label="Loading page"
-      className="mx-auto flex max-w-5xl flex-col gap-6"
+      className="mx-auto flex flex-col gap-6"
     >
       <div className="space-y-2">
         <div className="h-8 w-48 animate-pulse rounded-md bg-muted motion-reduce:animate-none" />

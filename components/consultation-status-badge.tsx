@@ -11,8 +11,8 @@ export function ConsultationStatusBadge({
   }
 
   if (consultation.completed) {
-    return <Badge variant="secondary">Completed</Badge>;
+    return <Badge variant="success">Completed</Badge>;
   }
 
-  return <Badge variant="outline">Scheduled</Badge>;
+  return <Badge variant="secondary">Scheduled</Badge>;
 }
