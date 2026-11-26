@@ -21,6 +21,7 @@ A small consultation-booking LMS built with Next.js App Router and Supabase. Stu
 - Supabase (`@supabase/ssr`, `supabase-js`, PostgreSQL, Auth)
 - Tailwind CSS and shadcn/ui
 - TanStack Table (`@tanstack/react-table@8.21.3`) with shadcn table primitives
+- shadcn Pagination, Sheet, Skeleton, and Radix Dialog primitives
 - Zod, React Hook Form, and `@hookform/resolvers`
 - pnpm; Supabase CLI `3.4.0`
 
@@ -304,7 +305,7 @@ If a future requirement needs history such as “completed, then cancelled,” u
 
 ### DataTable
 
-Both listings use the shadcn DataTable pattern and TanStack Table. `@tanstack/react-table` is pinned to `8.21.3` because the v9 API differs. Tables show fixed API order; sorting was removed. Pagination can be added client-side or through server-side `limit`/`offset`.
+Both listings use the shadcn DataTable pattern and TanStack Table. `@tanstack/react-table` is pinned to `8.21.3` because the v9 API differs. Tables show fixed API order; sorting was removed. Pagination is server-side with URL page state, exact totals, and a 10-row default page size.
 
 ### Validation and seed
 
@@ -328,9 +329,10 @@ Zod + React Hook Form centralise form rules and field errors; the API reuses the
 2. Auth shell: responsive collapsible sidebar, role-aware navigation, redirects, accessible auth pages.
 3. Booking: separate booking page, validated POST API, dashboard list.
 4. Management: status updates, reschedule, cancel, ownership and transition rules.
-5. Admin: read-only DataTable of all consultations; GET APIs for both lists.
+5. Admin: read-only DataTable of all consultations; server-rendered initial pages plus GET APIs for refresh/pagination.
 6. Validation/quality: single status model, Zod/React Hook Form, shadcn DataTables, seed, README and cleanup.
 7. Performance: session/profile reads are deduplicated per request with React.cache; route-level code splitting keeps auth forms, booking, and each DataTable out of unrelated bundles.
+8. UI primitives: shadcn Pagination for list navigation, Sheet for mobile navigation, and Skeleton for route loading; custom code remains for data/query controllers and form-field composition.
 
 ## Verification
 
@@ -367,8 +369,13 @@ app/api/consultations/route.ts    GET own list; POST create
 app/api/admin/consultations/...   GET all (admin)
 app/api/consultations/[id]/       PATCH status/reschedule
 app/auth/*                        auth pages and email confirmation
+lib/pagination/*                  page metadata and range helpers
+lib/queries/*                     shared server list queries
 components/*-table.tsx            shadcn DataTables
 components/*-form.tsx             React Hook Form forms
+components/ui/sheet.tsx           shadcn mobile navigation sheet
+components/ui/pagination.tsx      shadcn pagination primitives
+components/ui/skeleton.tsx        shadcn loading skeleton
 lib/schemas/*                     shared Zod schemas
 lib/queries/*                     shared server list queries
 lib/security/csp.ts               per-request nonce CSP

@@ -1,6 +1,11 @@
-import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import type { PaginationMeta } from "@/lib/pagination";
 
 function pageHref(basePath: string, page: number) {
@@ -19,37 +24,42 @@ export function DataPagination({
   }
 
   return (
-    <nav
-      aria-label="Consultation pagination"
-      className="flex flex-wrap items-center justify-between gap-3"
-    >
+    <div className="flex flex-wrap items-center justify-between gap-3">
       <p className="text-sm text-muted-foreground">
         Page {pagination.page} of {pagination.totalPages} ·{" "}
         {pagination.total} consultation
         {pagination.total === 1 ? "" : "s"}
       </p>
-      <div className="flex gap-2">
-        {pagination.page > 1 ? (
-          <Button asChild variant="outline" size="sm">
-            <Link href={pageHref(basePath, pagination.page - 1)}>
-              Previous
-            </Link>
-          </Button>
-        ) : (
-          <Button variant="outline" size="sm" disabled>
-            Previous
-          </Button>
-        )}
-        {pagination.page < pagination.totalPages ? (
-          <Button asChild variant="outline" size="sm">
-            <Link href={pageHref(basePath, pagination.page + 1)}>Next</Link>
-          </Button>
-        ) : (
-          <Button variant="outline" size="sm" disabled>
-            Next
-          </Button>
-        )}
-      </div>
-    </nav>
+      <Pagination
+        aria-label="Consultation pagination"
+        className="mx-0 w-auto justify-end"
+      >
+        <PaginationContent>
+          {pagination.page > 1 ? (
+            <PaginationItem>
+              <PaginationPrevious
+                href={pageHref(basePath, pagination.page - 1)}
+              />
+            </PaginationItem>
+          ) : null}
+          <PaginationItem>
+            <PaginationLink
+              href={pageHref(basePath, pagination.page)}
+              isActive
+              aria-label={`Page ${pagination.page}`}
+            >
+              {pagination.page}
+            </PaginationLink>
+          </PaginationItem>
+          {pagination.page < pagination.totalPages ? (
+            <PaginationItem>
+              <PaginationNext
+                href={pageHref(basePath, pagination.page + 1)}
+              />
+            </PaginationItem>
+          ) : null}
+        </PaginationContent>
+      </Pagination>
+    </div>
   );
 }
