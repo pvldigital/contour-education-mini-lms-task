@@ -1,9 +1,12 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 
+import { FieldError, FormError } from "@/components/form-errors";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,6 +16,10 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  loginSchema,
+  type LoginFormValues,
+} from "@/lib/schemas/auth";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -22,32 +29,32 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const emailRef = useRef<HTMLInputElement>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    setFocus,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
+  });
   const router = useRouter();
 
-  const handleLogin = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleLogin = async (values: LoginFormValues) => {
     const supabase = createClient();
-    setIsLoading(true);
-    setError(null);
+    setServerError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error } = await supabase.auth.signInWithPassword(values);
       if (error) throw error;
       router.push("/");
       router.refresh();
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
-      emailRef.current?.focus();
-    } finally {
-      setIsLoading(false);
+      setServerError(
+        error instanceof Error ? error.message : "An error occurred",
+      );
+      setFocus("email");
     }
   };
 
@@ -63,24 +70,27 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} aria-busy={isLoading || undefined}>
+          <form
+            onSubmit={handleSubmit(handleLogin)}
+            noValidate
+            aria-busy={isSubmitting || undefined}
+          >
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
-                  ref={emailRef}
                   id="email"
-                  name="email"
                   type="email"
                   autoComplete="email"
                   spellCheck={false}
                   placeholder="m@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  aria-invalid={error ? true : undefined}
-                  aria-describedby={error ? errorId : undefined}
+                  aria-invalid={errors.email ? true : undefined}
+                  aria-describedby={
+                    errors.email ? "email-error" : serverError ? errorId : undefined
+                  }
+                  {...register("email")}
                 />
+                <FieldError id="email-error" message={errors.email?.message} />
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
@@ -94,27 +104,30 @@ export function LoginForm({
                 </div>
                 <Input
                   id="password"
-                  name="password"
                   type="password"
                   autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  aria-invalid={error ? true : undefined}
-                  aria-describedby={error ? errorId : undefined}
+                  aria-invalid={errors.password ? true : undefined}
+                  aria-describedby={
+                    errors.password
+                      ? "password-error"
+                      : serverError
+                        ? errorId
+                        : undefined
+                  }
+                  {...register("password")}
+                />
+                <FieldError
+                  id="password-error"
+                  message={errors.password?.message}
                 />
               </div>
-              {error ? (
-                <p
-                  id={errorId}
-                  role="alert"
-                  className="text-sm text-red-700 dark:text-red-400"
-                >
-                  {error}
-                </p>
-              ) : null}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in…" : "Login"}
+              <FormError id={errorId} message={serverError} />
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Logging in…" : "Login"}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">

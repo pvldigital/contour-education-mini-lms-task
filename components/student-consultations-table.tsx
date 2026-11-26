@@ -13,6 +13,7 @@ import { Fragment, useState } from "react";
 
 import { ConsultationStatusBadge } from "@/components/consultation-status-badge";
 import { DataTableSortButton } from "@/components/data-table-sort-button";
+import { RescheduleForm } from "@/components/reschedule-form";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -21,8 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+
 import {
   Table,
   TableBody,
@@ -37,15 +37,6 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
   timeStyle: "short",
 });
-
-function toLocalInput(value: string) {
-  const date = new Date(value);
-  const local = new Date(
-    date.getTime() - date.getTimezoneOffset() * 60_000,
-  );
-
-  return local.toISOString().slice(0, 16);
-}
 
 async function updateConsultation(id: string, update: unknown) {
   const response = await fetch(`/api/consultations/${id}`, {
@@ -74,7 +65,6 @@ export function StudentConsultationsTable({
   ]);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [rescheduleId, setRescheduleId] = useState<string | null>(null);
-  const [rescheduleValue, setRescheduleValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const isPending = pendingId !== null;
 
@@ -102,34 +92,17 @@ export function StudentConsultationsTable({
   const openReschedule = (consultation: Consultation) => {
     setError(null);
     setRescheduleId(consultation.id);
-    setRescheduleValue(toLocalInput(consultation.scheduled_at));
   };
 
   const handleReschedule = async (
-    event: React.SubmitEvent<HTMLFormElement>,
+    scheduledAt: string,
     consultation: Consultation,
   ) => {
-    event.preventDefault();
     setError(null);
-
-    const date = new Date(rescheduleValue);
-
-    if (Number.isNaN(date.getTime())) {
-      setError("Choose a valid date and time.");
-      return;
-    }
-
-    if (date.getTime() <= Date.now()) {
-      setError("Choose a date and time in the future.");
-      return;
-    }
-
     setPendingId(consultation.id);
 
     try {
-      await updateConsultation(consultation.id, {
-        scheduledAt: date.toISOString(),
-      });
+      await updateConsultation(consultation.id, { scheduledAt });
       setRescheduleId(null);
       await onChanged();
     } catch (error: unknown) {
@@ -338,48 +311,14 @@ export function StudentConsultationsTable({
                         colSpan={columns.length}
                         className="bg-muted/30"
                       >
-                        <form
-                          onSubmit={(event) =>
-                            handleReschedule(event, consultation)
+                        <RescheduleForm
+                          defaultScheduledAt={consultation.scheduled_at}
+                          isPending={isPending}
+                          onSave={(scheduledAt) =>
+                            handleReschedule(scheduledAt, consultation)
                           }
-                          className="flex flex-col gap-3 sm:flex-row sm:items-end"
-                        >
-                          <div className="grid flex-1 gap-2">
-                            <Label
-                              htmlFor={`reschedule-${consultation.id}`}
-                            >
-                              New date and time
-                            </Label>
-                            <Input
-                              id={`reschedule-${consultation.id}`}
-                              type="datetime-local"
-                              value={rescheduleValue}
-                              onChange={(event) =>
-                                setRescheduleValue(event.target.value)
-                              }
-                              required
-                              disabled={isPending}
-                            />
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              type="submit"
-                              size="sm"
-                              disabled={isPending}
-                            >
-                              {isPending ? "Saving…" : "Save"}
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setRescheduleId(null)}
-                              disabled={isPending}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </form>
+                          onCancel={() => setRescheduleId(null)}
+                        />
                       </TableCell>
                     </TableRow>
                   ) : null}

@@ -1,8 +1,11 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 
+import { FieldError, FormError } from "@/components/form-errors";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,6 +15,10 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  updatePasswordSchema,
+  type UpdatePasswordFormValues,
+} from "@/lib/schemas/auth";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -21,30 +28,36 @@ export function UpdatePasswordForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const passwordRef = useRef<HTMLInputElement>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    setFocus,
+    formState: { errors, isSubmitting },
+  } = useForm<UpdatePasswordFormValues>({
+    resolver: zodResolver(updatePasswordSchema),
+    defaultValues: { password: "" },
+  });
   const router = useRouter();
 
   const handleUpdatePassword = async (
-    e: React.SubmitEvent<HTMLFormElement>,
+    values: UpdatePasswordFormValues,
   ) => {
-    e.preventDefault();
     const supabase = createClient();
-    setIsLoading(true);
-    setError(null);
+    setServerError(null);
 
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      const { error } = await supabase.auth.updateUser({
+        password: values.password,
+      });
       if (error) throw error;
       router.push("/");
       router.refresh();
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
-      passwordRef.current?.focus();
-    } finally {
-      setIsLoading(false);
+      setServerError(
+        error instanceof Error ? error.message : "An error occurred",
+      );
+      setFocus("password");
     }
   };
 
@@ -61,37 +74,40 @@ export function UpdatePasswordForm({
         </CardHeader>
         <CardContent>
           <form
-            onSubmit={handleUpdatePassword}
-            aria-busy={isLoading || undefined}
+            onSubmit={handleSubmit(handleUpdatePassword)}
+            noValidate
+            aria-busy={isSubmitting || undefined}
           >
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="password">New password</Label>
                 <Input
-                  ref={passwordRef}
                   id="password"
-                  name="password"
                   type="password"
                   autoComplete="new-password"
                   placeholder="New password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  aria-invalid={error ? true : undefined}
-                  aria-describedby={error ? errorId : undefined}
+                  aria-invalid={errors.password ? true : undefined}
+                  aria-describedby={
+                    errors.password
+                      ? "password-error"
+                      : serverError
+                        ? errorId
+                        : undefined
+                  }
+                  {...register("password")}
+                />
+                <FieldError
+                  id="password-error"
+                  message={errors.password?.message}
                 />
               </div>
-              {error ? (
-                <p
-                  id={errorId}
-                  role="alert"
-                  className="text-sm text-red-700 dark:text-red-400"
-                >
-                  {error}
-                </p>
-              ) : null}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Saving…" : "Save new password"}
+              <FormError id={errorId} message={serverError} />
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Saving…" : "Save new password"}
               </Button>
             </div>
           </form>

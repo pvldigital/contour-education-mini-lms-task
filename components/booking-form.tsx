@@ -1,8 +1,11 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 
+import { FieldError } from "@/components/form-errors";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,47 +16,47 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  bookingSchema,
+  type BookingFormValues,
+} from "@/lib/schemas/consultation";
 
 const errorId = "booking-error";
 
 export function BookingForm() {
   const router = useRouter();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [reason, setReason] = useState("");
-  const [scheduledAt, setScheduledAt] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<BookingFormValues>({
+    resolver: zodResolver(bookingSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      reason: "",
+      scheduledAt: "",
+    },
+  });
 
   useEffect(() => {
-    if (error) {
+    if (serverError) {
       errorRef.current?.focus();
     }
-  }, [error]);
+  }, [serverError]);
 
-  const handleSubmit = async (event: React.SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(null);
-    setIsLoading(true);
-
-    const date = new Date(scheduledAt);
-
-    if (Number.isNaN(date.getTime())) {
-      setError("Choose a valid consultation date and time.");
-      setIsLoading(false);
-      return;
-    }
+  const onSubmit = async (values: BookingFormValues) => {
+    setServerError(null);
 
     try {
       const response = await fetch("/api/consultations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firstName,
-          lastName,
-          reason,
-          scheduledAt: date.toISOString(),
+          ...values,
+          scheduledAt: new Date(values.scheduledAt).toISOString(),
         }),
       });
       const payload = (await response.json().catch(() => null)) as {
@@ -69,11 +72,9 @@ export function BookingForm() {
       router.push("/dashboard");
       router.refresh();
     } catch (error: unknown) {
-      setError(
+      setServerError(
         error instanceof Error ? error.message : "An error occurred.",
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -88,20 +89,27 @@ export function BookingForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} aria-busy={isLoading || undefined}>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          noValidate
+          aria-busy={isSubmitting || undefined}
+        >
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="first-name">First name</Label>
               <Input
                 id="first-name"
-                name="firstName"
                 autoComplete="given-name"
                 maxLength={100}
-                required
-                value={firstName}
-                onChange={(event) => setFirstName(event.target.value)}
-                aria-invalid={error ? true : undefined}
-                aria-describedby={error ? errorId : undefined}
+                aria-invalid={errors.firstName ? true : undefined}
+                aria-describedby={
+                  errors.firstName ? "first-name-error" : undefined
+                }
+                {...register("firstName")}
+              />
+              <FieldError
+                id="first-name-error"
+                message={errors.firstName?.message}
               />
             </div>
 
@@ -109,14 +117,17 @@ export function BookingForm() {
               <Label htmlFor="last-name">Last name</Label>
               <Input
                 id="last-name"
-                name="lastName"
                 autoComplete="family-name"
                 maxLength={100}
-                required
-                value={lastName}
-                onChange={(event) => setLastName(event.target.value)}
-                aria-invalid={error ? true : undefined}
-                aria-describedby={error ? errorId : undefined}
+                aria-invalid={errors.lastName ? true : undefined}
+                aria-describedby={
+                  errors.lastName ? "last-name-error" : undefined
+                }
+                {...register("lastName")}
+              />
+              <FieldError
+                id="last-name-error"
+                message={errors.lastName?.message}
               />
             </div>
           </div>
@@ -125,13 +136,16 @@ export function BookingForm() {
             <Label htmlFor="scheduled-at">Date and time</Label>
             <Input
               id="scheduled-at"
-              name="scheduledAt"
               type="datetime-local"
-              required
-              value={scheduledAt}
-              onChange={(event) => setScheduledAt(event.target.value)}
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? errorId : undefined}
+              aria-invalid={errors.scheduledAt ? true : undefined}
+              aria-describedby={
+                errors.scheduledAt ? "scheduled-at-error" : undefined
+              }
+              {...register("scheduledAt")}
+            />
+            <FieldError
+              id="scheduled-at-error"
+              message={errors.scheduledAt?.message}
             />
           </div>
 
@@ -139,18 +153,18 @@ export function BookingForm() {
             <Label htmlFor="reason">Reason for consultation</Label>
             <Textarea
               id="reason"
-              name="reason"
               rows={4}
               maxLength={2000}
-              required
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? errorId : undefined}
+              aria-invalid={errors.reason ? true : undefined}
+              aria-describedby={
+                errors.reason ? "reason-error" : undefined
+              }
+              {...register("reason")}
             />
+            <FieldError id="reason-error" message={errors.reason?.message} />
           </div>
 
-          {error ? (
+          {serverError ? (
             <p
               ref={errorRef}
               id={errorId}
@@ -158,12 +172,16 @@ export function BookingForm() {
               tabIndex={-1}
               className="mt-4 text-sm text-red-700 dark:text-red-400"
             >
-              {error}
+              {serverError}
             </p>
           ) : null}
 
-          <Button type="submit" className="mt-6 w-full" disabled={isLoading}>
-            {isLoading ? "Booking…" : "Book consultation"}
+          <Button
+            type="submit"
+            className="mt-6 w-full"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Booking…" : "Book consultation"}
           </Button>
         </form>
       </CardContent>

@@ -1,107 +1,55 @@
-export type BookingInput = {
-  firstName: string;
-  lastName: string;
-  reason: string;
-  scheduledAt: string;
-};
+import {
+  bookingSchema,
+  updateSchema,
+  type BookingFormValues,
+  type ConsultationUpdate,
+} from "@/lib/schemas/consultation";
 
-export type ConsultationUpdate =
-  | { scheduledAt: string }
-  | { status: "scheduled" | "completed" | "cancelled" };
+export type BookingInput = BookingFormValues;
+export type { ConsultationUpdate };
 
 type ParseResult = { data: BookingInput } | { error: string };
 type UpdateParseResult = { data: ConsultationUpdate } | { error: string };
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+function firstIssueMessage(error: {
+  issues: { message: string }[];
+}): string {
+  return error.issues[0]?.message ?? "Invalid request.";
 }
 
 export function parseBookingInput(input: unknown): ParseResult {
-  if (!isRecord(input)) {
-    return { error: "Invalid request." };
-  }
+  const parsed = bookingSchema.safeParse(input);
 
-  const firstName =
-    typeof input.firstName === "string" ? input.firstName.trim() : "";
-  const lastName =
-    typeof input.lastName === "string" ? input.lastName.trim() : "";
-  const reason = typeof input.reason === "string" ? input.reason.trim() : "";
-  const rawScheduledAt = input.scheduledAt;
-
-  if (!firstName || firstName.length > 100) {
-    return { error: "Enter a first name up to 100 characters." };
-  }
-
-  if (!lastName || lastName.length > 100) {
-    return { error: "Enter a last name up to 100 characters." };
-  }
-
-  if (!reason || reason.length > 2000) {
-    return { error: "Enter a reason up to 2000 characters." };
-  }
-
-  if (typeof rawScheduledAt !== "string") {
-    return { error: "Choose a consultation date and time." };
-  }
-
-  const scheduledAt = new Date(rawScheduledAt);
-
-  if (Number.isNaN(scheduledAt.getTime())) {
-    return { error: "Choose a valid consultation date and time." };
-  }
-
-  if (scheduledAt.getTime() <= Date.now()) {
-    return { error: "Choose a consultation date and time in the future." };
+  if (!parsed.success) {
+    return { error: firstIssueMessage(parsed.error) };
   }
 
   return {
     data: {
-      firstName,
-      lastName,
-      reason,
-      scheduledAt: scheduledAt.toISOString(),
+      ...parsed.data,
+      scheduledAt: new Date(parsed.data.scheduledAt).toISOString(),
     },
   };
 }
 
 export function parseUpdateInput(input: unknown): UpdateParseResult {
-  if (!isRecord(input)) {
-    return { error: "Invalid request." };
+  const parsed = updateSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return { error: firstIssueMessage(parsed.error) };
   }
 
-  const provided = ["scheduledAt", "status"].filter((key) => key in input);
-
-  if (provided.length !== 1) {
-    return { error: "Provide exactly one update." };
-  }
-
-  if ("scheduledAt" in input) {
-    if (typeof input.scheduledAt !== "string") {
-      return { error: "Choose a valid consultation date and time." };
-    }
-
-    const scheduledAt = new Date(input.scheduledAt);
-
-    if (Number.isNaN(scheduledAt.getTime())) {
-      return { error: "Choose a valid consultation date and time." };
-    }
-
-    if (scheduledAt.getTime() <= Date.now()) {
-      return { error: "Choose a consultation date and time in the future." };
-    }
-
-    return { data: { scheduledAt: scheduledAt.toISOString() } };
-  }
-
-  if (
-    input.status !== "scheduled" &&
-    input.status !== "completed" &&
-    input.status !== "cancelled"
-  ) {
+  if (parsed.data.scheduledAt !== undefined) {
     return {
-      error: "Status must be scheduled, completed, or cancelled.",
+      data: {
+        scheduledAt: new Date(parsed.data.scheduledAt).toISOString(),
+      },
     };
   }
 
-  return { data: { status: input.status } };
+  if (parsed.data.status === undefined) {
+    return { error: "Provide exactly one update." };
+  }
+
+  return { data: { status: parsed.data.status } };
 }
