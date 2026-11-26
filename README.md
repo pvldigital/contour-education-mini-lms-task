@@ -258,7 +258,7 @@ Responses use `{ consultation }` or `{ consultations }`; errors use `{ error: st
 | 401 | No authenticated user |
 | 403 | Wrong role for the endpoint |
 | 404 | Consultation missing or not owned |
-| 409 | Invalid state transition |
+| 409 | Invalid state transition, or the consultation changed concurrently |
 | 500 | Database failure |
 
 Both list endpoints are paginated with `page` and `pageSize` query parameters. `pageSize` defaults to 10 and is capped at 50. Responses include a `pagination` object with `page`, `pageSize`, `total`, and `totalPages`. Rows follow API order; column sorting is intentionally not exposed.
@@ -279,7 +279,7 @@ Both list endpoints are paginated with `page` and `pageSize` query parameters. `
 - Server page guards and API role checks are additional layers, not replacements for RLS.
 - Admin access is read-only.
 - The app uses only the public publishable/anon key. No service-role key is exposed to the browser.
-- API routes return 401 for unauthenticated requests and 404 for non-owned consultations so another student's rows are not revealed.
+- API routes return 401 for unauthenticated requests and 404 for non-owned consultations so another student's rows are not revealed. Status writes are conditional on the status that was read, so concurrent transitions cannot both succeed.
 - Auth redirects are resolved against a fixed origin before use; external and backslash-normalized paths are rejected.
 - [next.config.ts](next.config.ts) sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, production HSTS, and disables `X-Powered-By`. API responses are marked `private, no-store`.
 - The proxy creates a per-request nonce and applies a CSP with `strict-dynamic` scripts, `frame-ancestors 'none'`, and a Supabase-only `connect-src`. `style-src` permits inline styles because Radix/Next use them; scripts do not permit `unsafe-inline`.

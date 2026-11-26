@@ -110,20 +110,30 @@ export async function PATCH(
     update = { status: parsed.data.status };
   }
 
+  // Condition the write on the status we checked so concurrent transitions
+  // cannot both succeed after reading the same stale state.
   const { data, error } = await supabase
     .from("consultations")
     .update(update)
     .eq("id", id)
     .eq("student_id", user.id)
+    .eq("status", existing.status)
     .select(
       "id, student_id, first_name, last_name, reason, scheduled_at, status, created_at",
     )
-    .single();
+    .maybeSingle();
 
   if (error) {
     return NextResponse.json(
       { error: "Could not update consultation." },
       { status: 500 },
+    );
+  }
+
+  if (!data) {
+    return NextResponse.json(
+      { error: "Consultation changed. Refresh and try again." },
+      { status: 409 },
     );
   }
 
