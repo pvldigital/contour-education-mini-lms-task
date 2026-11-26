@@ -47,3 +47,4 @@ next-env.d.ts
 
 # local pnpm store (sandboxed workspace)
 .pnpm-store/
+.npm-cache/

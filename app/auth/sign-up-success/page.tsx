@@ -1,3 +1,6 @@
+import Link from "next/link";
+
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -23,6 +26,9 @@ export default function Page() {
                 You&apos;ve successfully signed up. Please check your email to
                 confirm your account before signing in.
               </p>
+              <Button asChild variant="outline" className="mt-4 w-full">
+                <Link href="/auth/login">Back to login</Link>
+              </Button>
             </CardContent>
           </Card>
         </div>
