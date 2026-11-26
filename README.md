@@ -328,6 +328,7 @@ Zod + React Hook Form centralise form rules and field errors; the API reuses the
 4. Management: status updates, reschedule, cancel, ownership and transition rules.
 5. Admin: read-only DataTable of all consultations; GET APIs for both lists.
 6. Validation/quality: single status model, Zod/React Hook Form, shadcn DataTables, seed, README and cleanup.
+7. Performance: session/profile reads are deduplicated per request with React.cache; route-level code splitting keeps auth forms, booking, and each DataTable out of unrelated bundles.
 
 ## Verification
 

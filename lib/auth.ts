@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
 import { createClient } from "@/lib/supabase/server";
 import type { Profile, SessionUser } from "@/lib/types";
 
-export async function getSessionUser(): Promise<SessionUser | null> {
+// Layout and page guards both read these; cache avoids duplicate per-request work.
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
   const claims = data?.claims;
@@ -16,9 +18,9 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     id: String(claims.sub),
     email: typeof claims.email === "string" ? claims.email : "",
   };
-}
+});
 
-export async function getProfile(id: string): Promise<Profile | null> {
+export const getProfile = cache(async (id: string): Promise<Profile | null> => {
   const supabase = await createClient();
   const { data } = await supabase
     .from("profiles")
@@ -35,7 +37,7 @@ export async function getProfile(id: string): Promise<Profile | null> {
     email: data.email,
     role: data.role === "admin" ? "admin" : "student",
   };
-}
+});
 
 export async function requireUser(): Promise<SessionUser> {
   const user = await getSessionUser();
