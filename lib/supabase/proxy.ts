@@ -1,6 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { createContentSecurityPolicy } from "@/lib/security/csp";
+import {
+  SESSION_COOKIE_MAX_AGE,
+  sessionCookieOptions,
+} from "@/lib/supabase/cookie-options";
 import { hasEnvVars } from "../utils";
 
 function syncCookieHeader(request: NextRequest, headers: Headers) {
@@ -40,6 +44,7 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
+      cookieOptions: sessionCookieOptions,
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -54,7 +59,11 @@ export async function updateSession(request: NextRequest) {
           });
           supabaseResponse.headers.set("Content-Security-Policy", csp);
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
+            supabaseResponse.cookies.set(name, value, {
+              ...options,
+              maxAge:
+                options.maxAge === 0 ? 0 : SESSION_COOKIE_MAX_AGE,
+            }),
           );
         },
       },

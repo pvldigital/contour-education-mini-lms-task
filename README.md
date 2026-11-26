@@ -272,7 +272,7 @@ Both list endpoints are currently unpaginated. Rows follow API order; column sor
 
 ## Security
 
-- Sessions use `@supabase/ssr` cookies; server code verifies claims through `getClaims()`.
+- Sessions use `@supabase/ssr` cookies with explicit `SameSite=Lax`, `Secure` when the Supabase URL is HTTPS, and a 7-day lifetime for browser and server writes; server code verifies claims through `getClaims()`.
 - Authorization uses `profiles.role`, never user-editable metadata.
 - RLS enforces ownership and admin SELECT access.
 - Server page guards and API role checks are additional layers, not replacements for RLS.
@@ -317,7 +317,7 @@ Zod + React Hook Form centralise form rules and field errors; the API reuses the
 - `cacheComponents` is disabled because authenticated pages read cookies; enabling it requires Suspense boundaries around session reads.
 - Admin list reads all rows; this is acceptable for a mini app but should be paginated as data grows.
 - The local seed is coupled to the local Auth schema and must remain local-only.
-- Session cookies inherit `@supabase/ssr` defaults; tightening `secure`/`maxAge` and adding API rate limiting remain follow-ups.
+- The session cookie is not `HttpOnly` because browser auth needs to read it; CSP limits XSS impact. Add API rate limiting as a follow-up.
 - The local PostgREST retag workaround is environment-specific.
 
 ## Implementation summary
@@ -368,6 +368,7 @@ components/*-table.tsx            shadcn DataTables
 components/*-form.tsx             React Hook Form forms
 lib/schemas/*                     shared Zod schemas
 lib/security/csp.ts               per-request nonce CSP
+lib/supabase/browser-cookies.ts   7-day browser session cookies
 lib/auth.ts                       session/profile/admin guards
 lib/supabase/*                    SSR/browser clients and proxy refresh
 supabase/migrations/              schema and security migrations
