@@ -117,7 +117,7 @@ export function MobileNavigation({
         >
           <div className="flex h-12 items-center justify-between">
             <Link
-              href="/dashboard"
+              href="/"
               onClick={close}
               className="text-lg font-semibold"
             >

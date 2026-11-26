@@ -8,8 +8,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { requireStudent } from "@/lib/auth";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  await requireStudent();
+
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">

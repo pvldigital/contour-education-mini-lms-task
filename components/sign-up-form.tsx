@@ -49,13 +49,13 @@ export function SignUpForm({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}/`,
         },
       });
       if (error) throw error;
 
       if (data.session) {
-        router.push("/dashboard");
+        router.push("/");
         router.refresh();
       } else {
         router.push("/auth/sign-up-success");

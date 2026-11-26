@@ -24,7 +24,9 @@ const baseNav: NavItem[] = [
   { href: "/consultations/new", label: "Book consultation", icon: CalendarPlus },
 ];
 
-const adminNav: NavItem[] = [{ href: "/admin", label: "Admin", icon: ShieldCheck }]
+const adminNav: NavItem[] = [
+  { href: "/admin", label: "Admin", icon: ShieldCheck },
+];
 
 export function AppSidebar({
   email,
@@ -37,10 +39,7 @@ export function AppSidebar({
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
 
-  const nav =
-    role === "admin"
-      ? adminNav
-      : baseNav;
+  const nav = role === "admin" ? adminNav : baseNav;
 
   const logout = async () => {
     const supabase = createClient();
@@ -60,16 +59,13 @@ export function AppSidebar({
     >
       <div className="flex h-16 items-center gap-2 border-b px-3">
         <Link
-          href="/dashboard"
-          aria-label="Mini LMS dashboard"
+          href="/"
+          aria-label="Mini LMS"
           className={cn(
             "flex min-w-0 items-center gap-2 font-semibold max-md:hidden",
             collapsed && "hidden",
           )}
         >
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-sm text-primary-foreground">
-            M
-          </span>
           <span className="truncate">Mini LMS</span>
         </Link>
         <Button

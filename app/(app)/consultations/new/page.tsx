@@ -5,8 +5,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { requireStudent } from "@/lib/auth";
 
-export default function NewConsultationPage() {
+export default async function NewConsultationPage() {
+  await requireStudent();
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <div>

@@ -47,6 +47,20 @@ export async function requireUser(): Promise<SessionUser> {
   return user;
 }
 
+export async function requireStudent(): Promise<{
+  user: SessionUser;
+  profile: Profile | null;
+}> {
+  const user = await requireUser();
+  const profile = await getProfile(user.id);
+
+  if (profile?.role === "admin") {
+    redirect("/admin");
+  }
+
+  return { user, profile };
+}
+
 export async function requireAdmin(): Promise<{
   user: SessionUser;
   profile: Profile;
