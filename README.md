@@ -1,49 +1,8 @@
 # Mini LMS
 
-A small consultation-booking LMS built with Next.js App Router and Supabase. Students book consultations, manage their own bookings, and admins get a read-only view of every consultation.
+A small consultation-booking LMS built with Next.js App Router, TypeScript, and Supabase.
 
-## Features
-
-- Email/password authentication with cookie-based Supabase sessions.
-- Student dashboard containing only the signed-in student's consultations.
-- Booking form on a separate page.
-- Mark a consultation complete or incomplete.
-- Reschedule or cancel a consultation with confirmation and state rules.
-- Admin-only, read-only DataTable of all consultations, including student email.
-- Shared Zod schemas and React Hook Form validation.
-- Responsive, collapsible sidebar; booking and listing are separate routes.
-- Supabase RLS plus server-side role guards and API role checks.
-- Local-only seed data for quick development.
-
-## Stack
-
-- Next.js `16.4.6` App Router, React 19, TypeScript
-- Supabase (`@supabase/ssr`, `supabase-js`, PostgreSQL, Auth)
-- Tailwind CSS and shadcn/ui
-- TanStack Table (`@tanstack/react-table@8.21.3`) with shadcn table primitives
-- shadcn Pagination, Sheet, Skeleton, and Radix Dialog primitives
-- Zod, React Hook Form, and `@hookform/resolvers`
-- pnpm; Supabase CLI `3.4.0`
-
-## Architecture
-
-```text
-Browser
-  ├─ Server Components: role guards, initial list queries, redirects
-  ├─ Client views: hydrated DataTables/forms; GET APIs for refresh/pagination
-  └─ API Route Handlers: role checks + Zod validation + Supabase queries
-                                      │
-                                      ▼
-                         Supabase Postgres + RLS
-```
-
-- Initial list data is loaded by the guarded server page through shared query helpers.
-- GET APIs handle refreshes and pagination; mutations use `POST`/`PATCH`.
-- Server pages call `requireStudent()` or `requireAdmin()` before rendering.
-- RLS is the final row-level boundary, independent of the UI.
-- Admin access is SELECT-only at both the API and database layers.
-
-## Getting started
+## Special setup instructions
 
 ### Prerequisites
 
@@ -51,43 +10,41 @@ Browser
 - pnpm
 - A Supabase project, or Docker/OrbStack for the local Supabase stack
 
-### Install
+Install dependencies and create the environment file:
 
 ```bash
 pnpm install
 cp .env.example .env.local
 ```
 
-Fill in:
+Set:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable-or-anon-key>
 ```
 
-The legacy anon key also works with `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; it is a public browser key, not a service-role secret. Never expose a service-role/secret key through `NEXT_PUBLIC_*`.
+Use the publishable/anon key only. Never expose a service-role key through a `NEXT_PUBLIC_*` variable.
 
-### Option A: hosted Supabase
+### Hosted Supabase
 
-1. Create a project in the Supabase dashboard.
-2. Copy the Project URL and publishable/anon key into `.env.local`.
-3. Apply migrations:
+1. Apply the six migrations:
 
    ```bash
    pnpm db:link
    pnpm db:push
    ```
 
-   `db:link` and `db:push` need CLI authentication. Set `SUPABASE_ACCESS_TOKEN` and `SUPABASE_DB_PASSWORD` in a gitignored env file when the CLI is not already logged in.
+   `db:link` and `db:push` require a Supabase access token and database password. Keep them in a gitignored env file. The migrations are already applied to the linked project, including the composite pagination indexes.
 
-4. In Authentication > URL Configuration, set the Site URL and allow:
+2. In Supabase Authentication > URL Configuration, set the Site URL and allow:
    - `/`
    - `/auth/confirm`
    - `/auth/update-password`
 
-5. For email/password demos, either confirm the email or disable email confirmation in the hosted Auth settings.
+3. Configure email confirmation for the demo, or confirm test accounts manually.
 
-6. Promote an admin:
+4. Promote an admin:
 
    ```sql
    update public.profiles
@@ -95,13 +52,14 @@ The legacy anon key also works with `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; it i
    where email = 'admin@example.com';
    ```
 
-### Option B: local Supabase
+### Local Supabase
 
-Requires Docker, Docker Desktop, or OrbStack.
+Requires OrbStack, Docker Desktop, or another Docker runtime.
 
 ```bash
 pnpm db:start
-pnpm db:reset   # applies migrations and the local seed
+pnpm db:stop
+pnpm db:reset
 pnpm exec supabase status
 ```
 
@@ -111,288 +69,153 @@ Copy the local API URL and publishable/anon key from `supabase status` into `.en
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). Stop the stack with `pnpm db:stop`.
 
-Stop the local stack with:
+Local seed accounts use password `password123`:
 
-```bash
-pnpm db:stop
-```
+Admin account email: admin@example.com
+Student account email: student@example.com
+Student account email: student2@example.com
 
-`pnpm db:reset` is destructive and local-only. Never point it at a hosted project.
+The seed also creates five consultations covering scheduled, completed, and cancelled states. The seed is local-only and is never applied to the hosted project.
 
-#### Local seed accounts
+Local environment notes:
 
-All local seed accounts use the password `password123`:
+- If the CLI cannot write `~/.supabase`, prefix commands with `SUPABASE_HOME=$PWD/.supabase-home`.
+- If Docker cannot pull `postgrest/postgrest:v17.1`, pull `supabase/postgrest:v17.1-middleware` and retag it as `postgrest/postgrest:v17.1`.
 
-| Email | Role |
-|---|---|
-| `admin@example.com` | admin |
-| `student@example.com` | student |
-| `student2@example.com` | student |
+### Commands
 
-The seed creates scheduled, completed, and cancelled rows so the tables and actions can be exercised immediately. These credentials and data are for local development only.
+`pnpm dev` - Start Next.js
+`pnpm build` - Production build
+`pnpm start`- Start the production server
+`pnpm lint` - ESLint
+`pnpm db:remote:link` - Link the Supabase project
+`pnpm db:remote:push` - Apply migrations to the linked remote project
+`pnpm db:remote:migrations` - Compare local/remote migration history
+`pnpm db:remote:advisors` - Run hosted security/performance advisors
+`pnpm db:local:start` - Start local Supabase
+`pnpm db:local:stop` - Stop local Supabase
+`pnpm db:local:reset` - Reset local DB, apply migrations, and seed
 
-#### Local Supabase notes
+## Justifications and assumptions
 
-- If the CLI cannot write to `~/.supabase`, set `SUPABASE_HOME=$PWD/.supabase-home` for CLI commands.
-- If Docker cannot pull `postgrest/postgrest:v17.1` (the linked project currently uses PostgREST v17.1, which is not on Docker Hub under that name), pull `supabase/postgrest:v17.1-middleware` and retag it as `postgrest/postgrest:v17.1`.
-- `supabase/config.jsonc` points the seed at `supabase/seed.sql`. The seed is not applied by a normal hosted `db push`.
+### API and data flow
 
-### Migration state
+- Initial list pages are server-rendered through shared query helpers in `lib/queries/consultations.ts`; GET APIs remain available for refresh and pagination.
+- This hybrid avoids an initial client-fetch waterfall while keeping one query implementation for page and API consumers.
+- List pagination is offset-based with exact counts and stable `(scheduled_at, id)` ordering.
+- No filtering/search is implemented yet.
 
-All six migrations are applied to the linked hosted project. `pnpm db:migrations` matches local and remote history, and hosted advisors report no issues. Temporary remote QA users and consultations were removed after verification. Do not reset or overwrite remote history.
+### Roles and RLS
 
-## Scripts
+- Authorization uses `profiles.role`, never user-editable metadata.
+- RLS is the final row boundary; server guards and API checks are additional defence.
+- Students can select, insert, and update only their own consultations.
+- Admins can select all consultations but cannot update them; admin write restrictions are enforced in the API and in RLS.
+- There is no DELETE policy. Cancellation is a soft status update.
 
-| Script | Purpose |
-|---|---|
-| `pnpm dev` | Start Next.js |
-| `pnpm build` | Production build |
-| `pnpm start` | Start the production server |
-| `pnpm lint` | ESLint |
-| `pnpm db:link` | Link this checkout to a Supabase project |
-| `pnpm db:push` | Apply migrations to the linked remote project |
-| `pnpm db:migrations` | Compare local and remote migration history |
-| `pnpm db:advisors` | Run hosted security/performance advisors |
-| `pnpm db:start` | Start local Supabase |
-| `pnpm db:stop` | Stop local Supabase |
-| `pnpm db:reset` | Reset local DB, apply migrations, and seed |
+### Single status model
 
-## Database
+The original schema used `status` (`scheduled`/`cancelled`) plus a `completed` boolean. That represented four combinations for three valid states and could store contradictory data such as `cancelled + completed`.
 
-### Tables
-
-`public.profiles`
-
-| Column | Notes |
-|---|---|
-| `id` | UUID PK, references `auth.users(id)` on delete cascade |
-| `email` | text, not null |
-| `role` | `student` or `admin`; default `student` |
-| `created_at` | timestamptz, default `now()` |
-
-`public.consultations`
-
-| Column | Notes |
-|---|---|
-| `id` | UUID PK, default `gen_random_uuid()` |
-| `student_id` | UUID, references `profiles(id)` on delete cascade |
-| `first_name`, `last_name` | trimmed, 1–100 characters |
-| `reason` | trimmed, 1–2000 characters |
-| `scheduled_at` | timestamptz |
-| `status` | `scheduled`, `completed`, or `cancelled`; default `scheduled` |
-| `created_at`, `updated_at` | timestamptz |
-
-Triggers create a profile after an `auth.users` insert and maintain `updated_at`. Indexes cover `(student_id, scheduled_at)` and `scheduled_at`.
-
-### Status lifecycle
-
-| Current | Allowed |
-|---|---|
-| `scheduled` | mark complete, reschedule, cancel |
-| `completed` | mark incomplete; no reschedule or cancel |
-| `cancelled` | terminal; no updates |
-
-`status` is the single source of truth. There is no separate `completed` boolean.
-
-### Migration history
+The current schema uses one status:
 
 ```text
-20261125233030_create_lms_schema.sql
-20261125235253_restrict_trigger_function_execution.sql
-20261126042103_restrict_admin_consultation_writes.sql
-20261126042934_revoke_trigger_function_api_execute.sql
-20261126210906_consolidate_consultation_status.sql
-20261126223834_keyset_pagination_indexes.sql
+scheduled/completed/cancelled
 ```
 
-The last migration backfills `completed=true` rows to `status='completed'` and drops the boolean. Cancelled rows win over a stale completed flag because cancellation is terminal.
+Migration `20261126210906_consolidate_consultation_status.sql` backfills `completed=true` to `status='completed'`, adds the new check constraint, and drops the boolean. Cancelled remains terminal; completed rows cannot be rescheduled or cancelled. The transition update is conditional on the status that was read, so concurrent conflicting updates return `409` instead of both succeeding.
 
-### RLS and roles
+### Validation
 
-| Table | SELECT | INSERT | UPDATE | DELETE |
-|---|---|---|---|---|
-| `profiles` | own row or admin | none | none | none |
-| `consultations` | own rows or admin | own `student_id` | own rows, preserving `student_id` | none |
+- Zod schemas in `lib/schemas/` are shared by API parsers and client forms.
+- React Hook Form provides field state/errors in the browser.
+- The server always revalidates requests; browser validation is UX only.
+- Auth forms are client-side UX; Supabase Auth remains authoritative. Passwords require at least 6 characters.
 
-- `private.is_admin()` checks the current user's `profiles.role`.
-- Admin mutation requests are rejected by the API and by RLS.
-- Role changes happen through SQL/service role, never through user-editable metadata.
-- No DELETE policy: cancellation is a status update.
+### UI
 
-### Local seed
+- shadcn/ui + Tailwind are used throughout.
+- Both consultation lists use the shadcn DataTable pattern with TanStack Table. Sorting is not exposed; rows follow API order.
+- shadcn Pagination, Sheet, and Skeleton replace custom pagination controls, the mobile dialog/focus trap, and custom skeleton divs.
+- The sidebar remains a tailored collapsible component; status badges and data/query controllers stay domain-specific.
 
-`supabase/seed.sql` is local-only. It inserts demo auth users, profiles, and consultations using fixed UUIDs and `on conflict do nothing`. It is intentionally coupled to the local Supabase Auth schema and must not be run against a hosted project.
+### Security
 
-## API
+- `getClaims()` verifies the session server-side; do not replace it with unverified session data.
+- Security headers include frame denial, nosniff, referrer/permissions policies, production HSTS, and a nonce-based CSP.
+- Session cookies use `SameSite=Lax`, HTTPS-only `Secure`, and a 7-day lifetime. They are not `HttpOnly` because browser-side Supabase auth must read them; the CSP reduces XSS impact.
+- API errors are generic and ownership checks return `404` for another student’s row.
+- API rate limiting and data retention/deletion workflows are not implemented; they are known production follow-ups.
+- `cacheComponents` is disabled because authenticated pages read cookies. All pages are dynamic to support CSP nonces.
 
-| Method | Endpoint | Access | Purpose |
-|---|---|---|---|
-| `GET` | `/api/consultations` | student | Own consultations, ascending by scheduled time |
-| `GET` | `/api/admin/consultations` | admin | All consultations with student email, descending |
-| `POST` | `/api/consultations` | student | Create a consultation |
-| `PATCH` | `/api/consultations/[id]` | student/owner | Complete, uncomplete, reschedule, or cancel |
+### Assumptions
 
-`PATCH` accepts exactly one of:
+- One role per user and one student per consultation.
+- No organisations, notifications, hard deletes, or filters.
+- Storage is UTC; the UI displays the viewer’s local time and interprets `datetime-local` input in the browser timezone.
+- The local seed inserts into the local Supabase Auth schema and must remain local-only.
+- No automated test suite exists; verification is lint/build, API/RLS checks, and manual browser flows.
+- The `getClaims()` “insecure user object” warning is a known false positive; auth is not weakened to silence it.
 
-```json
-{ "status": "completed" }
+## Summary of the overall implementation
+
+### Stack and structure
+
+- Next.js `16.4.6`, React 19, TypeScript, Tailwind, shadcn/ui
+- Supabase Auth/Postgres with `@supabase/ssr` and `supabase-js`
+- Zod, React Hook Form, and `@hookform/resolvers`
+- TanStack Table with shadcn DataTable
+- Supabase CLI `3.4.0` and six migrations
+
+Key paths:
+
+```text
+app/(app)/layout.tsx             authenticated shell and sidebar
+app/(app)/dashboard/page.tsx     student consultation list
+app/(app)/consultations/new/     separate booking page
+app/(app)/admin/page.tsx         admin-only read-only list
+app/api/consultations/route.ts   GET own list; POST create
+app/api/admin/consultations/...  GET all consultations (admin)
+app/api/consultations/[id]/      PATCH status/reschedule
+app/auth/*                       auth pages and confirmation
+lib/queries/*                    shared server list queries
+lib/pagination/*                 page metadata/range helpers
+lib/schemas/*                    shared Zod schemas
+lib/auth.ts                      session/profile/role guards
+lib/security/csp.ts              per-request nonce CSP
+components/*-table.tsx           student/admin DataTables
+components/*-form.tsx            React Hook Form forms
+supabase/migrations/             schema, indexes, triggers, RLS
+supabase/seed.sql                local-only demo data
 ```
 
-```json
-{ "status": "scheduled" }
-```
+### Features
 
-```json
-{ "status": "cancelled" }
-```
+- Email/password sign-up, login, logout, forgot/update password.
+- Role-aware redirects: admins to `/admin`, students to `/dashboard`.
+- Students create, list, complete/incomplete, reschedule, and cancel their own consultations.
+- Admin read-only view of all consultations with student email.
+- Paginated lists with page/total metadata and stable ordering.
+- Local seed for three accounts and five consultations.
 
-```json
-{ "scheduledAt": "2026-12-01T09:00:00.000Z" }
-```
+### API
 
-Responses use `{ consultation }` or `{ consultations }`; errors use `{ error: string }`.
+`GET` - `/api/consultations?page=&pageSize=` - Student, own rows
+`GET` - `/api/admin/consultations?page=&pageSize=` - Admin, all rows
+`POST` - `/api/consultations` - Student, create
+`PATCH` - `/api/consultations/[id]` - Owner, status or reschedule
 
-| Status | Meaning |
-|---|---|
-| 400 | Invalid fields, invalid/past datetime, invalid status, or more than one update field |
-| 401 | No authenticated user |
-| 403 | Wrong role for the endpoint |
-| 404 | Consultation missing or not owned |
-| 409 | Invalid state transition, or the consultation changed concurrently |
-| 500 | Database failure |
+Pagination defaults to 10 rows and caps at 50. Responses are `{ consultation }` / `{ consultations, pagination }`; errors are `{ error: string }` with `400`, `401`, `403`, `404`, `409`, or `500`.
 
-Both list endpoints are paginated with `page` and `pageSize` query parameters. `pageSize` defaults to 10 and is capped at 50. Responses include a `pagination` object with `page`, `pageSize`, `total`, and `totalPages`. Rows follow API order; column sorting is intentionally not exposed.
-
-## Validation
-
-- Zod schemas live in `lib/schemas/consultation.ts` and `lib/schemas/auth.ts`.
-- Consultation schemas are shared by the API parsers and the booking/reschedule forms.
-- React Hook Form provides field state and errors in the browser; `noValidate` lets Zod handle validation consistently.
-- Server validation is authoritative. API requests are parsed again even when the client already validated.
-- Auth form validation is client-side UX only; Supabase Auth remains authoritative. Passwords require at least 6 characters, matching Supabase's default minimum.
-
-## Security
-
-- Sessions use `@supabase/ssr` cookies with explicit `SameSite=Lax`, `Secure` when the Supabase URL is HTTPS, and a 7-day lifetime for browser and server writes; server code verifies claims through `getClaims()`.
-- Authorization uses `profiles.role`, never user-editable metadata.
-- RLS enforces ownership and admin SELECT access.
-- Server page guards and API role checks are additional layers, not replacements for RLS.
-- Admin access is read-only.
-- The app uses only the public publishable/anon key. No service-role key is exposed to the browser.
-- API routes return 401 for unauthenticated requests and 404 for non-owned consultations so another student's rows are not revealed. Status writes are conditional on the status that was read, so concurrent transitions cannot both succeed.
-- Auth redirects are resolved against a fixed origin before use; external and backslash-normalized paths are rejected.
-- [next.config.ts](next.config.ts) sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, production HSTS, and disables `X-Powered-By`. API responses are marked `private, no-store`.
-- The proxy creates a per-request nonce and applies a CSP with `strict-dynamic` scripts, `frame-ancestors 'none'`, and a Supabase-only `connect-src`. `style-src` permits inline styles because Radix/Next use them; scripts do not permit `unsafe-inline`.
-- Pages are dynamically rendered so Next.js can attach the CSP nonce to its scripts.
-
-### Known `getClaims()` warning
-
-Some `supabase-js` versions log an “insecure user object” warning when `getClaims()` reads the cookie-backed session. The call verifies the JWT and is the intended server-side check. Do not switch to unverified `getSession()` or weaken auth to silence it.
-
-## Design decisions
-
-### API-first reads and writes
-
-Initial list data is loaded in the guarded Server Component through shared query helpers, so the first paint already contains the table data. Pagination is URL-driven (`?page=N`) and server-rendered; GET APIs remain available for refreshes after actions and future filtering. This hybrid avoids the initial client-fetch waterfall without duplicating query logic; API routes and pages call the same query helpers.
-
-### Single status field
-
-The original schema used `status` (`scheduled`/`cancelled`) plus a `completed` boolean. That allowed four combinations for three valid states and could represent `cancelled + completed`. The product rules make cancellation terminal and do not need completion independent of lifecycle, so the boolean was redundant. Migration `20261126210906_consolidate_consultation_status.sql` backfills and removes it.
-
-If a future requirement needs history such as “completed, then cancelled,” use an event/audit table rather than reintroducing a contradictory boolean.
-
-### DataTable
-
-Both listings use the shadcn DataTable pattern and TanStack Table. `@tanstack/react-table` is pinned to `8.21.3` because the v9 API differs. Tables show fixed API order; sorting was removed. Pagination is server-side with URL page state, exact totals, and a 10-row default page size.
-
-### Validation and seed
-
-Zod + React Hook Form centralise form rules and field errors; the API reuses the consultation schemas. The seed is local-only and intentionally inserts into the local Auth schema; it is not a production fixture.
-
-## Assumptions and limitations
-
-- One role per user; one student per consultation.
-- No organisations, notifications, hard deletes, or filters yet.
-- Storage is UTC; the UI displays the viewer's local time and interprets `datetime-local` inputs in the browser timezone.
-- No automated test suite; verification uses lint/build, SQL/API checks, and the manual matrix below.
-- `cacheComponents` is disabled because authenticated pages read cookies; enabling it requires Suspense boundaries around session reads.
-- Lists are paginated at 10 rows per page; the admin list reads only the current page.
-- The local seed is coupled to the local Auth schema and must remain local-only.
-- The session cookie is not `HttpOnly` because browser auth needs to read it; CSP limits XSS impact. Add API rate limiting as a follow-up.
-- The local PostgREST retag workaround is environment-specific.
-
-## Implementation summary
-
-1. Database: profiles/consultations schema, triggers, indexes, RLS, role helper, migration hardening.
-2. Auth shell: responsive collapsible sidebar, role-aware navigation, redirects, accessible auth pages.
-3. Booking: separate booking page, validated POST API, dashboard list.
-4. Management: status updates, reschedule, cancel, ownership and transition rules.
-5. Admin: read-only DataTable of all consultations; server-rendered initial pages plus GET APIs for refresh/pagination.
-6. Validation/quality: single status model, Zod/React Hook Form, shadcn DataTables, seed, README and cleanup.
-7. Performance: session/profile reads are deduplicated per request with React.cache; route-level code splitting keeps auth forms, booking, and each DataTable out of unrelated bundles.
-8. UI primitives: shadcn Pagination for list navigation, Sheet for mobile navigation, and Skeleton for route loading; custom code remains for data/query controllers and form-field composition.
-
-## Verification
+### Verification
 
 ```bash
 pnpm lint
 pnpm build
+pnpm db:remote:migrations
+pnpm db:remote:advisors
 ```
 
-### Manual E2E matrix
-
-| # | Flow | Expected |
-|---|---|---|
-| 1 | Sign up | Account created; confirmation path or session handled |
-| 2 | Log in / log out | Routes to `/dashboard`; logout returns to login |
-| 3 | Student dashboard | Only own consultations |
-| 4 | Book consultation | Four fields; appears on dashboard; invalid/past rejected |
-| 5 | Complete/incomplete | Status updates and persists |
-| 6 | Reschedule | Future time saved and displayed |
-| 7 | Cancel | Status becomes cancelled; actions disappear |
-| 8 | Student isolation | Student B cannot read or mutate Student A's row |
-| 9 | Admin view | All consultations visible; no mutation controls |
-| 10 | Student admin route | Redirected away |
-| 11 | API auth | No session 401; non-owner 404; wrong role 403 |
-| 12 | Quality | Lint/build pass; advisors pass |
-
-## Project structure
-
-```text
-app/(app)/layout.tsx              authenticated shell and sidebar
-app/(app)/dashboard/page.tsx      student consultation DataTable
-app/(app)/consultations/new/      separate booking page
-app/(app)/admin/page.tsx          admin-only read-only DataTable
-app/api/consultations/route.ts    GET own list; POST create
-app/api/admin/consultations/...   GET all (admin)
-app/api/consultations/[id]/       PATCH status/reschedule
-app/auth/*                        auth pages and email confirmation
-lib/pagination/*                  page metadata and range helpers
-lib/queries/*                     shared server list queries
-components/*-table.tsx            shadcn DataTables
-components/*-form.tsx             React Hook Form forms
-components/ui/sheet.tsx           shadcn mobile navigation sheet
-components/ui/pagination.tsx      shadcn pagination primitives
-components/ui/skeleton.tsx        shadcn loading skeleton
-lib/schemas/*                     shared Zod schemas
-lib/queries/*                     shared server list queries
-lib/security/csp.ts               per-request nonce CSP
-lib/supabase/browser-cookies.ts   7-day browser session cookies
-lib/auth.ts                       session/profile/admin guards
-lib/supabase/*                    SSR/browser clients and proxy refresh
-supabase/migrations/              schema and security migrations
-supabase/seed.sql                 local-only demo data
-```
-
-## Future work
-
-- Filtering for both consultation lists.
-- Automated auth/RLS/API tests and a CI quality gate.
-- Request-level caching of session/profile lookups.
-- Optional audit/event history for consultation state changes.
-
-## License
-
-Private assessment project.
+Manual coverage includes auth, sign-up, role redirects, ownership isolation, booking validation, complete/incomplete, reschedule, cancel, admin read-only access, unauthenticated API responses, and pagination. Hosted migrations are applied and hosted advisors are clean. No formal automated test suite is present.
