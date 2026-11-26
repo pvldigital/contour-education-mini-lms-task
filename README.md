@@ -140,7 +140,7 @@ The seed creates scheduled, completed, and cancelled rows so the tables and acti
 
 ### Migration state
 
-All five migrations are applied to the linked hosted project. `pnpm db:migrations` matches local and remote history, and hosted advisors report no issues. Temporary remote QA users and consultations were removed after verification. Do not reset or overwrite remote history.
+All six migrations are applied to the linked hosted project. `pnpm db:migrations` matches local and remote history, and hosted advisors report no issues. Temporary remote QA users and consultations were removed after verification. Do not reset or overwrite remote history.
 
 ## Scripts
 
@@ -203,6 +203,7 @@ Triggers create a profile after an `auth.users` insert and maintain `updated_at`
 20261126042103_restrict_admin_consultation_writes.sql
 20261126042934_revoke_trigger_function_api_execute.sql
 20261126210906_consolidate_consultation_status.sql
+20261126223834_keyset_pagination_indexes.sql
 ```
 
 The last migration backfills `completed=true` rows to `status='completed'` and drops the boolean. Cancelled rows win over a stale completed flag because cancellation is terminal.

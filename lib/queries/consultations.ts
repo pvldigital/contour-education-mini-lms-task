@@ -29,6 +29,7 @@ export async function getStudentConsultations(
     )
     .eq("student_id", studentId)
     .order("scheduled_at", { ascending: true })
+    .order("id", { ascending: true })
     .range(from, to);
 
   if (error) {
@@ -63,6 +64,7 @@ export async function getAdminConsultations({
       { count: "exact" },
     )
     .order("scheduled_at", { ascending: false })
+    .order("id", { ascending: false })
     .range(from, to);
 
   if (error) {
