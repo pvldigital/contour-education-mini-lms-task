@@ -56,7 +56,7 @@ export async function PATCH(
   const supabase = await createClient();
   const { data: existing, error: fetchError } = await supabase
     .from("consultations")
-    .select("id, completed, status")
+    .select("id, status")
     .eq("id", id)
     .eq("student_id", user.id)
     .maybeSingle();
@@ -83,15 +83,12 @@ export async function PATCH(
   }
 
   let update: {
-    completed?: boolean;
     scheduled_at?: string;
-    status?: "cancelled";
+    status?: "scheduled" | "completed" | "cancelled";
   };
 
-  if ("completed" in parsed.data) {
-    update = { completed: parsed.data.completed };
-  } else if ("scheduledAt" in parsed.data) {
-    if (existing.completed) {
+  if ("scheduledAt" in parsed.data) {
+    if (existing.status === "completed") {
       return NextResponse.json(
         { error: "Completed consultations cannot be rescheduled." },
         { status: 409 },
@@ -100,14 +97,17 @@ export async function PATCH(
 
     update = { scheduled_at: parsed.data.scheduledAt };
   } else {
-    if (existing.completed) {
+    if (
+      existing.status === "completed" &&
+      parsed.data.status === "cancelled"
+    ) {
       return NextResponse.json(
         { error: "Completed consultations cannot be cancelled." },
         { status: 409 },
       );
     }
 
-    update = { status: "cancelled" };
+    update = { status: parsed.data.status };
   }
 
   const { data, error } = await supabase
@@ -116,7 +116,7 @@ export async function PATCH(
     .eq("id", id)
     .eq("student_id", user.id)
     .select(
-      "id, student_id, first_name, last_name, reason, scheduled_at, completed, status, created_at",
+      "id, student_id, first_name, last_name, reason, scheduled_at, status, created_at",
     )
     .single();
 

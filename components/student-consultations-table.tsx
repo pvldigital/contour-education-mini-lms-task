@@ -78,15 +78,15 @@ export function StudentConsultationsTable({
   const [error, setError] = useState<string | null>(null);
   const isPending = pendingId !== null;
 
-  const setCompleted = async (
+  const setStatus = async (
     consultation: Consultation,
-    completed: boolean,
+    status: "scheduled" | "completed",
   ) => {
     setError(null);
     setPendingId(consultation.id);
 
     try {
-      await updateConsultation(consultation.id, { completed });
+      await updateConsultation(consultation.id, { status });
       await onChanged();
     } catch (error: unknown) {
       setError(
@@ -215,8 +215,7 @@ export function StudentConsultationsTable({
       header: () => <span className="block text-right">Actions</span>,
       cell: ({ row }) => {
         const consultation = row.original;
-        const canManage =
-          consultation.status !== "cancelled" && !consultation.completed;
+        const canManage = consultation.status === "scheduled";
 
         if (consultation.status === "cancelled") {
           return <span className="block text-right text-muted-foreground">—</span>;
@@ -243,13 +242,15 @@ export function StudentConsultationsTable({
                 <DropdownMenuItem
                   disabled={isPending}
                   onSelect={() =>
-                    void setCompleted(
+                    void setStatus(
                       consultation,
-                      !consultation.completed,
+                      consultation.status === "completed"
+                        ? "scheduled"
+                        : "completed",
                     )
                   }
                 >
-                  {consultation.completed
+                  {consultation.status === "completed"
                     ? "Mark as incomplete"
                     : "Mark as complete"}
                 </DropdownMenuItem>
@@ -317,9 +318,7 @@ export function StudentConsultationsTable({
           <TableBody>
             {table.getRowModel().rows.map((row) => {
               const consultation = row.original;
-              const canManage =
-                consultation.status !== "cancelled" &&
-                !consultation.completed;
+              const canManage = consultation.status === "scheduled";
 
               return (
                 <Fragment key={row.id}>

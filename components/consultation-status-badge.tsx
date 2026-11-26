@@ -4,13 +4,13 @@ import type { Consultation } from "@/lib/types";
 export function ConsultationStatusBadge({
   consultation,
 }: {
-  consultation: Pick<Consultation, "completed" | "status">;
+  consultation: Pick<Consultation, "status">;
 }) {
   if (consultation.status === "cancelled") {
     return <Badge variant="destructive">Cancelled</Badge>;
   }
 
-  if (consultation.completed) {
+  if (consultation.status === "completed") {
     return <Badge variant="success">Completed</Badge>;
   }
 

@@ -28,7 +28,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from("consultations")
     .select(
-      "id, student_id, first_name, last_name, reason, scheduled_at, completed, status, created_at",
+      "id, student_id, first_name, last_name, reason, scheduled_at, status, created_at",
     )
     .eq("student_id", user.id)
     .order("scheduled_at", { ascending: true });
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
       scheduled_at: parsed.data.scheduledAt,
     })
     .select(
-      "id, student_id, first_name, last_name, reason, scheduled_at, completed, status, created_at",
+      "id, student_id, first_name, last_name, reason, scheduled_at, status, created_at",
     )
     .single();
 

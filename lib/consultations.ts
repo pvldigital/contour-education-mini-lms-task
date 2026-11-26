@@ -6,9 +6,8 @@ export type BookingInput = {
 };
 
 export type ConsultationUpdate =
-  | { completed: boolean }
   | { scheduledAt: string }
-  | { status: "cancelled" };
+  | { status: "scheduled" | "completed" | "cancelled" };
 
 type ParseResult = { data: BookingInput } | { error: string };
 type UpdateParseResult = { data: ConsultationUpdate } | { error: string };
@@ -70,20 +69,10 @@ export function parseUpdateInput(input: unknown): UpdateParseResult {
     return { error: "Invalid request." };
   }
 
-  const provided = ["completed", "scheduledAt", "status"].filter(
-    (key) => key in input,
-  );
+  const provided = ["scheduledAt", "status"].filter((key) => key in input);
 
   if (provided.length !== 1) {
     return { error: "Provide exactly one update." };
-  }
-
-  if ("completed" in input) {
-    if (typeof input.completed !== "boolean") {
-      return { error: "Completed must be true or false." };
-    }
-
-    return { data: { completed: input.completed } };
   }
 
   if ("scheduledAt" in input) {
@@ -104,9 +93,15 @@ export function parseUpdateInput(input: unknown): UpdateParseResult {
     return { data: { scheduledAt: scheduledAt.toISOString() } };
   }
 
-  if (input.status !== "cancelled") {
-    return { error: "Only cancellation is supported." };
+  if (
+    input.status !== "scheduled" &&
+    input.status !== "completed" &&
+    input.status !== "cancelled"
+  ) {
+    return {
+      error: "Status must be scheduled, completed, or cancelled.",
+    };
   }
 
-  return { data: { status: "cancelled" } };
+  return { data: { status: input.status } };
 }

@@ -28,7 +28,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from("consultations")
     .select(
-      "id, student_id, first_name, last_name, reason, scheduled_at, completed, status, created_at, profiles(email)",
+      "id, student_id, first_name, last_name, reason, scheduled_at, status, created_at, profiles(email)",
     )
     .order("scheduled_at", { ascending: false });
 
@@ -51,7 +51,6 @@ export async function GET() {
       last_name: row.last_name,
       reason: row.reason,
       scheduled_at: row.scheduled_at,
-      completed: row.completed,
       status: row.status,
       created_at: row.created_at,
       student_email: student?.email ?? null,

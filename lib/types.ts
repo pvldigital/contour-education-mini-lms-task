@@ -11,7 +11,7 @@ export type SessionUser = {
   email: string;
 };
 
-export type ConsultationStatus = "scheduled" | "cancelled";
+export type ConsultationStatus = "scheduled" | "completed" | "cancelled";
 
 export type Consultation = {
   id: string;
@@ -20,7 +20,6 @@ export type Consultation = {
   last_name: string;
   reason: string;
   scheduled_at: string;
-  completed: boolean;
   status: ConsultationStatus;
   created_at: string;
 };

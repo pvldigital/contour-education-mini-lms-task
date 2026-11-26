@@ -126,7 +126,6 @@ insert into public.consultations (
   last_name,
   reason,
   scheduled_at,
-  completed,
   status
 )
 values
@@ -137,7 +136,6 @@ values
     'Student',
     'Discuss a mathematics study plan for the next term.',
     now() + interval '2 days',
-    false,
     'scheduled'
   ),
   (
@@ -147,7 +145,6 @@ values
     'Student',
     'Review the recent physics assessment and next steps.',
     now() + interval '5 days',
-    false,
     'scheduled'
   ),
   (
@@ -157,8 +154,7 @@ values
     'Student',
     'Career planning follow-up from the previous session.',
     now() - interval '3 days',
-    true,
-    'scheduled'
+    'completed'
   ),
   (
     'aaaaaaaa-4444-4444-8444-aaaaaaaaaaa4',
@@ -167,7 +163,6 @@ values
     'Student',
     'Practice consultation cancelled by the student.',
     now() + interval '7 days',
-    false,
     'cancelled'
   ),
   (
@@ -177,7 +172,6 @@ values
     'Student',
     'University application guidance.',
     now() + interval '3 days',
-    false,
     'scheduled'
   )
 on conflict (id) do nothing;
