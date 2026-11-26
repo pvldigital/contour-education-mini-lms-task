@@ -1,5 +1,6 @@
 export const DEFAULT_PAGE_SIZE = 10;
 export const MAX_PAGE_SIZE = 50;
+export const MAX_PAGE = 10_000;
 
 export type PaginationMeta = {
   page: number;
@@ -19,7 +20,7 @@ function positiveInteger(value: string | null | undefined, fallback: number) {
 }
 
 export function parsePage(value: string | null | undefined) {
-  return positiveInteger(value, 1);
+  return Math.min(positiveInteger(value, 1), MAX_PAGE);
 }
 
 export function parsePageSize(value: string | null | undefined) {

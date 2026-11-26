@@ -129,6 +129,7 @@ Migration `20261126210906_consolidate_consultation_status.sql` backfills `comple
 
 ### Validation
 
+- Supabase database types are generated from the linked schema into `lib/supabase/database.types.ts` with `pnpm db:types`; both browser and server clients use the `Database` type.
 - Zod schemas in `lib/schemas/` are shared by API parsers and client forms.
 - React Hook Form provides field state/errors in the browser.
 - The server always revalidates requests; browser validation is UX only.
@@ -207,7 +208,7 @@ supabase/seed.sql                local-only demo data
 `POST` - `/api/consultations` - Student, create
 `PATCH` - `/api/consultations/[id]` - Owner, status or reschedule
 
-Pagination defaults to 10 rows and caps at 50. Responses are `{ consultation }` / `{ consultations, pagination }`; errors are `{ error: string }` with `400`, `401`, `403`, `404`, `409`, or `500`.
+Pagination defaults to 10 rows, caps at 50 per page, and clamps page numbers to 10,000. Responses are `{ consultation }` / `{ consultations, pagination }`; errors are `{ error: string }` with `400`, `401`, `403`, `404`, `409`, or `500`.
 
 ### Verification
 

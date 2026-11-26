@@ -4,7 +4,17 @@ import {
   type PaginationMeta,
 } from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
-import type { AdminConsultation, Consultation } from "@/lib/types";
+import type {
+  AdminConsultation,
+  Consultation,
+  ConsultationStatus,
+} from "@/lib/types";
+
+function toConsultationStatus(value: string): ConsultationStatus {
+  return value === "completed" || value === "cancelled"
+    ? value
+    : "scheduled";
+}
 
 type PageParams = {
   page: number;
@@ -41,7 +51,10 @@ export async function getStudentConsultations(
   }
 
   return {
-    consultations: data ?? [],
+    consultations: (data ?? []).map((row) => ({
+      ...row,
+      status: toConsultationStatus(row.status),
+    })),
     pagination: paginationMeta(count ?? 0, page, pageSize),
     error: null,
   };
@@ -87,7 +100,7 @@ export async function getAdminConsultations({
       last_name: row.last_name,
       reason: row.reason,
       scheduled_at: row.scheduled_at,
-      status: row.status,
+      status: toConsultationStatus(row.status),
       created_at: row.created_at,
       student_email: student?.email ?? null,
     };
