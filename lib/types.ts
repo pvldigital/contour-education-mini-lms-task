@@ -24,3 +24,7 @@ export type Consultation = {
   status: ConsultationStatus;
   created_at: string;
 };
+
+export type AdminConsultation = Consultation & {
+  student_email: string | null;
+};
