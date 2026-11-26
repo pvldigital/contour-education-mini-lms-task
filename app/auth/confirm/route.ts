@@ -9,11 +9,9 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type") as EmailOtpType | null;
   const requestedNext = searchParams.get("next") ?? "/";
   const next =
-    requestedNext === "/protected"
-      ? "/"
-      : requestedNext.startsWith("/") && !requestedNext.startsWith("//")
-        ? requestedNext
-        : "/";
+    requestedNext.startsWith("/") && !requestedNext.startsWith("//")
+      ? requestedNext
+      : "/";
 
   if (token_hash && type) {
     const supabase = await createClient();
