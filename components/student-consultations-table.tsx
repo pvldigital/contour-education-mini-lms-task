@@ -3,16 +3,13 @@
 import {
   flexRender,
   getCoreRowModel,
-  getSortedRowModel,
   useReactTable,
   type ColumnDef,
-  type SortingState,
 } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import { Fragment, useState } from "react";
 
 import { ConsultationStatusBadge } from "@/components/consultation-status-badge";
-import { DataTableSortButton } from "@/components/data-table-sort-button";
 import { RescheduleForm } from "@/components/reschedule-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,9 +57,6 @@ export function StudentConsultationsTable({
   consultations: Consultation[];
   onChanged: () => Promise<void>;
 }) {
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "scheduled_at", desc: false },
-  ]);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [rescheduleId, setRescheduleId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -143,9 +137,7 @@ export function StudentConsultationsTable({
     {
       id: "name",
       accessorFn: (row) => `${row.first_name} ${row.last_name}`,
-      header: ({ column }) => (
-        <DataTableSortButton label="Name" column={column} />
-      ),
+      header: "Name",
       cell: ({ row }) => (
         <span className="font-medium">
           {row.original.first_name} {row.original.last_name}
@@ -154,9 +146,7 @@ export function StudentConsultationsTable({
     },
     {
       accessorKey: "scheduled_at",
-      header: ({ column }) => (
-        <DataTableSortButton label="Scheduled" column={column} />
-      ),
+      header: "Scheduled",
       cell: ({ row }) => (
         <time
           dateTime={row.original.scheduled_at}
@@ -256,10 +246,7 @@ export function StudentConsultationsTable({
   const table = useReactTable({
     data: consultations,
     columns,
-    state: { sorting },
-    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
 
   return (

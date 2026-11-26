@@ -3,15 +3,11 @@
 import {
   flexRender,
   getCoreRowModel,
-  getSortedRowModel,
   useReactTable,
   type ColumnDef,
-  type SortingState,
 } from "@tanstack/react-table";
-import { useState } from "react";
 
 import { ConsultationStatusBadge } from "@/components/consultation-status-badge";
-import { DataTableSortButton } from "@/components/data-table-sort-button";
 import {
   Table,
   TableBody,
@@ -31,9 +27,7 @@ const columns: ColumnDef<AdminConsultation>[] = [
   {
     id: "student",
     accessorFn: (row) => `${row.first_name} ${row.last_name}`,
-    header: ({ column }) => (
-      <DataTableSortButton label="Student" column={column} />
-    ),
+    header: "Student",
     cell: ({ row }) => (
       <div>
         <div className="font-medium">
@@ -56,9 +50,7 @@ const columns: ColumnDef<AdminConsultation>[] = [
   },
   {
     accessorKey: "scheduled_at",
-    header: ({ column }) => (
-      <DataTableSortButton label="Scheduled" column={column} />
-    ),
+    header: "Scheduled",
     cell: ({ row }) => (
       <time
         dateTime={row.original.scheduled_at}
@@ -83,17 +75,10 @@ export function AdminConsultationsTable({
 }: {
   consultations: AdminConsultation[];
 }) {
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "scheduled_at", desc: true },
-  ]);
-
   const table = useReactTable({
     data: consultations,
     columns,
-    state: { sorting },
-    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
 
   return (
