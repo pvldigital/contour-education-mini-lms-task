@@ -1,14 +1,35 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { createContentSecurityPolicy } from "@/lib/security/csp";
 import { hasEnvVars } from "../utils";
 
-export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+function syncCookieHeader(request: NextRequest, headers: Headers) {
+  const cookie = request.cookies
+    .getAll()
+    .map(({ name, value }) => `${name}=${value}`)
+    .join("; ");
 
-  // If the env vars are not set, skip proxy check. You can remove this
-  // once you setup the project.
+  if (cookie) {
+    headers.set("cookie", cookie);
+  } else {
+    headers.delete("cookie");
+  }
+}
+
+export async function updateSession(request: NextRequest) {
+  const nonce = btoa(crypto.randomUUID());
+  const csp = createContentSecurityPolicy(nonce);
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", csp);
+
+  let supabaseResponse = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+  supabaseResponse.headers.set("Content-Security-Policy", csp);
+
+  // If the env vars are not set, skip proxy check. The page guards and
+  // database RLS still apply; configured environments fail closed at setup.
   if (!hasEnvVars) {
     return supabaseResponse;
   }
@@ -27,9 +48,11 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
+          syncCookieHeader(request, requestHeaders);
           supabaseResponse = NextResponse.next({
-            request,
+            request: { headers: requestHeaders },
           });
+          supabaseResponse.headers.set("Content-Security-Policy", csp);
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options),
           );

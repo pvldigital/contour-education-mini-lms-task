@@ -279,7 +279,10 @@ Both list endpoints are currently unpaginated. Rows follow API order; column sor
 - Admin access is read-only.
 - The app uses only the public publishable/anon key. No service-role key is exposed to the browser.
 - API routes return 401 for unauthenticated requests and 404 for non-owned consultations so another student's rows are not revealed.
-- Remote auth URL redirects are constrained to same-origin paths.
+- Auth redirects are resolved against a fixed origin before use; external and backslash-normalized paths are rejected.
+- [next.config.ts](next.config.ts) sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, production HSTS, and disables `X-Powered-By`. API responses are marked `private, no-store`.
+- The proxy creates a per-request nonce and applies a CSP with `strict-dynamic` scripts, `frame-ancestors 'none'`, and a Supabase-only `connect-src`. `style-src` permits inline styles because Radix/Next use them; scripts do not permit `unsafe-inline`.
+- Pages are dynamically rendered so Next.js can attach the CSP nonce to its scripts.
 
 ### Known `getClaims()` warning
 
@@ -314,6 +317,7 @@ Zod + React Hook Form centralise form rules and field errors; the API reuses the
 - `cacheComponents` is disabled because authenticated pages read cookies; enabling it requires Suspense boundaries around session reads.
 - Admin list reads all rows; this is acceptable for a mini app but should be paginated as data grows.
 - The local seed is coupled to the local Auth schema and must remain local-only.
+- Session cookies inherit `@supabase/ssr` defaults; tightening `secure`/`maxAge` and adding API rate limiting remain follow-ups.
 - The local PostgREST retag workaround is environment-specific.
 
 ## Implementation summary
@@ -363,6 +367,7 @@ app/auth/*                        auth pages and email confirmation
 components/*-table.tsx            shadcn DataTables
 components/*-form.tsx             React Hook Form forms
 lib/schemas/*                     shared Zod schemas
+lib/security/csp.ts               per-request nonce CSP
 lib/auth.ts                       session/profile/admin guards
 lib/supabase/*                    SSR/browser clients and proxy refresh
 supabase/migrations/              schema and security migrations

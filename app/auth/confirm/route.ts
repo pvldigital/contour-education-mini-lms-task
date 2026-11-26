@@ -5,6 +5,7 @@ import { type NextRequest } from "next/server";
 
 const appOrigin = new URL("https://app.local");
 
+// Resolve first: backslash paths like "/\evil.com" become an external origin.
 function safeNextPath(value: string | null): string {
   if (!value) {
     return "/";
