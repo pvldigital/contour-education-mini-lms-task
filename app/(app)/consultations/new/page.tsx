@@ -1,10 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { BookingForm } from "@/components/booking-form";
 import { requireStudent } from "@/lib/auth";
 
 export default async function NewConsultationPage() {
@@ -19,18 +13,7 @@ export default async function NewConsultationPage() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Booking form</CardTitle>
-          <CardDescription>
-            The booking form is added in the next step.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          First name, last name, reason, and consultation datetime will be
-          collected here.
-        </CardContent>
-      </Card>
+      <BookingForm />
     </div>
   );
 }
