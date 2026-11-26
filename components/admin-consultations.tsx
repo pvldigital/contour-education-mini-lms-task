@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { AdminConsultationsTable } from "@/components/admin-consultations-table";
 import { Button } from "@/components/ui/button";
@@ -28,12 +28,16 @@ async function fetchAdminConsultations() {
   return payload?.consultations ?? [];
 }
 
-export function AdminConsultations() {
-  const [consultations, setConsultations] = useState<
-    AdminConsultation[] | null
-  >(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export function AdminConsultations({
+  initialConsultations,
+  initialError,
+}: {
+  initialConsultations: AdminConsultation[];
+  initialError: string | null;
+}) {
+  const [consultations, setConsultations] =
+    useState<AdminConsultation[]>(initialConsultations);
+  const [error, setError] = useState<string | null>(initialError);
 
   const loadConsultations = useCallback(async () => {
     try {
@@ -45,27 +49,10 @@ export function AdminConsultations() {
           ? error.message
           : "Could not load consultations.",
       );
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    void loadConsultations();
-  }, [loadConsultations]);
-
-  if (isLoading && consultations === null) {
-    return (
-      <div
-        role="status"
-        aria-busy="true"
-        aria-label="Loading consultations"
-        className="h-64 animate-pulse rounded-lg border bg-muted/40 motion-reduce:animate-none"
-      />
-    );
-  }
-
-  if (error && consultations === null) {
+  if (error && consultations.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -78,10 +65,7 @@ export function AdminConsultations() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => {
-              setIsLoading(true);
-              void loadConsultations();
-            }}
+            onClick={() => void loadConsultations()}
           >
             Try again
           </Button>
@@ -90,7 +74,7 @@ export function AdminConsultations() {
     );
   }
 
-  if (!consultations || consultations.length === 0) {
+  if (consultations.length === 0) {
     return (
       <Card>
         <CardHeader>

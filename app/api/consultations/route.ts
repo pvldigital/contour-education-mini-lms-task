@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getProfile, getSessionUser } from "@/lib/auth";
 import { parseBookingInput } from "@/lib/consultations";
+import { getStudentConsultations } from "@/lib/queries/consultations";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
@@ -24,23 +25,13 @@ export async function GET() {
     );
   }
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("consultations")
-    .select(
-      "id, student_id, first_name, last_name, reason, scheduled_at, status, created_at",
-    )
-    .eq("student_id", user.id)
-    .order("scheduled_at", { ascending: true });
+  const { consultations, error } = await getStudentConsultations(user.id);
 
   if (error) {
-    return NextResponse.json(
-      { error: "Could not load consultations." },
-      { status: 500 },
-    );
+    return NextResponse.json({ error }, { status: 500 });
   }
 
-  return NextResponse.json({ consultations: data ?? [] });
+  return NextResponse.json({ consultations });
 }
 
 export async function POST(request: Request) {

@@ -28,15 +28,16 @@ A small consultation-booking LMS built with Next.js App Router and Supabase. Stu
 
 ```text
 Browser
-  ├─ Server Components: page shells, role guards, redirects
-  ├─ Client views: fetch GET APIs, render DataTables/forms
+  ├─ Server Components: role guards, initial list queries, redirects
+  ├─ Client views: hydrated DataTables/forms; GET APIs for refresh/pagination
   └─ API Route Handlers: role checks + Zod validation + Supabase queries
                                       │
                                       ▼
                          Supabase Postgres + RLS
 ```
 
-- Reads use GET Route Handlers; mutations use `POST`/`PATCH` Route Handlers.
+- Initial list data is loaded by the guarded server page through shared query helpers.
+- GET APIs handle refreshes and future pagination; mutations use `POST`/`PATCH`.
 - Server pages call `requireStudent()` or `requireAdmin()` before rendering.
 - RLS is the final row-level boundary, independent of the UI.
 - Admin access is SELECT-only at both the API and database layers.
@@ -292,7 +293,7 @@ Some `supabase-js` versions log an “insecure user object” warning when `getC
 
 ### API-first reads and writes
 
-Reads and mutations use Route Handlers. The initial student/admin pages queried directly in Server Components; they were moved to GET APIs for consistency, one response contract, and upcoming pagination/filtering. The trade-off is an extra client fetch and explicit loading/error states.
+Initial list data is loaded in the guarded Server Component through shared query helpers, so the first paint already contains the table data. GET APIs remain available for refreshes, actions, and upcoming pagination/filtering. This hybrid avoids the initial client-fetch waterfall without duplicating query logic; API routes and pages call the same query helpers.
 
 ### Single status field
 
@@ -368,6 +369,7 @@ app/auth/*                        auth pages and email confirmation
 components/*-table.tsx            shadcn DataTables
 components/*-form.tsx             React Hook Form forms
 lib/schemas/*                     shared Zod schemas
+lib/queries/*                     shared server list queries
 lib/security/csp.ts               per-request nonce CSP
 lib/supabase/browser-cookies.ts   7-day browser session cookies
 lib/auth.ts                       session/profile/admin guards

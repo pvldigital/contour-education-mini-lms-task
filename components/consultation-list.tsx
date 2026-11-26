@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { StudentConsultationsTable } from "@/components/student-consultations-table";
 import { Button } from "@/components/ui/button";
@@ -29,12 +29,16 @@ async function fetchConsultations() {
   return payload?.consultations ?? [];
 }
 
-export function ConsultationList() {
-  const [consultations, setConsultations] = useState<Consultation[] | null>(
-    null,
-  );
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+export function ConsultationList({
+  initialConsultations,
+  initialError,
+}: {
+  initialConsultations: Consultation[];
+  initialError: string | null;
+}) {
+  const [consultations, setConsultations] =
+    useState<Consultation[]>(initialConsultations);
+  const [loadError, setLoadError] = useState<string | null>(initialError);
 
   const loadConsultations = useCallback(async () => {
     try {
@@ -46,34 +50,10 @@ export function ConsultationList() {
           ? error.message
           : "Could not load consultations.",
       );
-    } finally {
-      setIsInitialLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    void loadConsultations();
-  }, [loadConsultations]);
-
-  if (isInitialLoading && consultations === null) {
-    return (
-      <div
-        role="status"
-        aria-busy="true"
-        aria-label="Loading consultations"
-        className="space-y-3"
-      >
-        {[0, 1, 2].map((index) => (
-          <div
-            key={index}
-            className="h-36 animate-pulse rounded-xl border bg-muted/40 motion-reduce:animate-none"
-          />
-        ))}
-      </div>
-    );
-  }
-
-  if (loadError && consultations === null) {
+  if (loadError && consultations.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -86,10 +66,7 @@ export function ConsultationList() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => {
-              setIsInitialLoading(true);
-              void loadConsultations();
-            }}
+            onClick={() => void loadConsultations()}
           >
             Try again
           </Button>
@@ -98,7 +75,7 @@ export function ConsultationList() {
     );
   }
 
-  if (!consultations || consultations.length === 0) {
+  if (consultations.length === 0) {
     return (
       <Card>
         <CardHeader>

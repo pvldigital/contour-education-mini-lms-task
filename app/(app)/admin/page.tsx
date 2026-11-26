@@ -1,8 +1,10 @@
 import { AdminConsultations } from "@/components/admin-consultations";
 import { requireAdmin } from "@/lib/auth";
+import { getAdminConsultations } from "@/lib/queries/consultations";
 
 export default async function AdminPage() {
   await requireAdmin();
+  const { consultations, error } = await getAdminConsultations();
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
@@ -13,7 +15,10 @@ export default async function AdminPage() {
         </p>
       </div>
 
-      <AdminConsultations />
+      <AdminConsultations
+        initialConsultations={consultations}
+        initialError={error}
+      />
     </div>
   );
 }
