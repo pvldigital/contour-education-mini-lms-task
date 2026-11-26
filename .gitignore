@@ -48,3 +48,7 @@ next-env.d.ts
 # local pnpm store (sandboxed workspace)
 .pnpm-store/
 .npm-cache/
+test-results/
+playwright-report/
+blob-report/
+.env.test.local

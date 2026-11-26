@@ -31,11 +31,11 @@ Use the publishable/anon key only. Never expose a service-role key through a `NE
 1. Apply the six migrations:
 
    ```bash
-   pnpm db:link
-   pnpm db:push
+   pnpm db:remote:link
+   pnpm db:remote:push
    ```
 
-   `db:link` and `db:push` require a Supabase access token and database password. Keep them in a gitignored env file. The migrations are already applied to the linked project, including the composite pagination indexes.
+   `db:remote:link` and `db:remote:push` require a Supabase access token and database password. Keep them in a gitignored env file.
 
 2. In Supabase Authentication > URL Configuration, set the Site URL and allow:
    - `/`
@@ -57,9 +57,9 @@ Use the publishable/anon key only. Never expose a service-role key through a `NE
 Requires OrbStack, Docker Desktop, or another Docker runtime.
 
 ```bash
-pnpm db:start
-pnpm db:stop
-pnpm db:reset
+pnpm db:local:start
+pnpm db:local:stop
+pnpm db:local:reset
 pnpm exec supabase status
 ```
 
@@ -69,7 +69,7 @@ Copy the local API URL and publishable/anon key from `supabase status` into `.en
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Stop the stack with `pnpm db:stop`.
+Open [http://localhost:3000](http://localhost:3000). Stop the stack with `pnpm db:local:stop`.
 
 Local seed accounts use password `password123`:
 
@@ -78,6 +78,23 @@ Student account email: student@example.com
 Student account email: student2@example.com
 
 The seed also creates five consultations covering scheduled, completed, and cancelled states. The seed is local-only and is never applied to the hosted project.
+
+For the automated suites, copy the local values into the test environment and reset before running:
+
+```bash
+pnpm db:local:start
+pnpm db:local:reset
+pnpm exec supabase status -o env
+export TEST_SUPABASE_URL=http://127.0.0.1:54321
+export TEST_SUPABASE_ANON_KEY=<local-anon-key>
+export TEST_BASE_URL=http://127.0.0.1:3100
+
+pnpm test:unit
+pnpm test:rls
+pnpm test:e2e
+```
+
+`pnpm test:e2e` builds and starts a production server on port 3100. `tests/` are intentionally local-only; they refuse non-local Supabase URLs.
 
 Local environment notes:
 
@@ -129,7 +146,7 @@ Migration `20261126210906_consolidate_consultation_status.sql` backfills `comple
 
 ### Validation
 
-- Supabase database types are generated from the linked schema into `lib/supabase/database.types.ts` with `pnpm db:types`; both browser and server clients use the `Database` type.
+- Supabase database types are generated from the linked schema into `lib/supabase/database.types.ts` with `pnpm db:remote:types`; both browser and server clients use the `Database` type.
 - Zod schemas in `lib/schemas/` are shared by API parsers and client forms.
 - React Hook Form provides field state/errors in the browser.
 - The server always revalidates requests; browser validation is UX only.
@@ -157,7 +174,7 @@ Migration `20261126210906_consolidate_consultation_status.sql` backfills `comple
 - No organisations, notifications, hard deletes, or filters.
 - Storage is UTC; the UI displays the viewer’s local time and interprets `datetime-local` input in the browser timezone.
 - The local seed inserts into the local Supabase Auth schema and must remain local-only.
-- No automated test suite exists; verification is lint/build, API/RLS checks, and manual browser flows.
+- Unit, RLS, and two Playwright smoke suites run locally and in CI; broader manual QA still covers auth recovery and edge cases.
 - The `getClaims()` “insecure user object” warning is a known false positive; auth is not weakened to silence it.
 
 ## Summary of the overall implementation
@@ -215,8 +232,11 @@ Pagination defaults to 10 rows, caps at 50 per page, and clamps page numbers to 
 ```bash
 pnpm lint
 pnpm build
+pnpm test:unit
+pnpm test:rls
+pnpm test:e2e
 pnpm db:remote:migrations
 pnpm db:remote:advisors
 ```
 
-Manual coverage includes auth, sign-up, role redirects, ownership isolation, booking validation, complete/incomplete, reschedule, cancel, admin read-only access, unauthenticated API responses, and pagination. Hosted migrations are applied and hosted advisors are clean. No formal automated test suite is present.
+Automated coverage includes validation/pagination units, RLS ownership and admin read-only rules, the student booking/manage flow, admin read-only controls, role redirects, and student rejection by the admin API.

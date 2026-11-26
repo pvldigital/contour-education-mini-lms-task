@@ -18,13 +18,20 @@ function supabaseConnectSources() {
 export function createContentSecurityPolicy(nonce: string) {
   const isDev = process.env.NODE_ENV === "development";
 
+  const scriptSrc = isDev
+    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+    : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`;
+  const devConnect = isDev
+    ? " ws://localhost:* ws://127.0.0.1:*"
+    : "";
+
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
+    scriptSrc,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
-    `connect-src 'self'${supabaseConnectSources()}`,
+    `connect-src 'self'${supabaseConnectSources()}${devConnect}`,
     "object-src 'none'",
     "frame-src 'none'",
     "frame-ancestors 'none'",

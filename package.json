@@ -11,7 +11,12 @@
     "db:remote:advisors": "supabase db advisors --remote",
     "db:local:start": "supabase start",
     "db:local:stop": "supabase stop",
-    "db:local:reset": "supabase db reset"
+    "db:local:reset": "supabase db reset",
+    "db:remote:types": "supabase gen types typescript --remote > lib/supabase/database.types.ts",
+    "test": "vitest run tests/unit",
+    "test:unit": "vitest run tests/unit",
+    "test:rls": "vitest run tests/rls",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.9",
@@ -35,6 +40,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.7",
+    "@playwright/test": "^1.65.1",
     "@types/node": "^20.19.43",
     "@types/react": "^19.3.1",
     "@types/react-dom": "^19.3.0",
@@ -45,6 +51,7 @@
     "supabase": "^3.4.0",
     "tailwindcss": "^3.4.19",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.2"
   }
 }
