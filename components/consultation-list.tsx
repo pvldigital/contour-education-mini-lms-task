@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useState } from "react";
 
+import { DataPagination } from "@/components/data-pagination";
 import { StudentConsultationsTable } from "@/components/student-consultations-table";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,38 +12,56 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
+import type { PaginationMeta } from "@/lib/pagination";
 import type { Consultation } from "@/lib/types";
 
-async function fetchConsultations() {
-  const response = await fetch("/api/consultations", {
+async function fetchConsultations(page: number, pageSize: number) {
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+  const response = await fetch(`/api/consultations?${params}`, {
     cache: "no-store",
   });
   const payload = (await response.json().catch(() => null)) as {
     consultations?: Consultation[];
+    pagination?: PaginationMeta;
     error?: string;
   } | null;
 
-  if (!response.ok) {
+  if (!response.ok || !payload?.pagination) {
     throw new Error(payload?.error ?? "Could not load consultations.");
   }
 
-  return payload?.consultations ?? [];
+  return {
+    consultations: payload.consultations ?? [],
+    pagination: payload.pagination,
+  };
 }
 
 export function ConsultationList({
   initialConsultations,
+  initialPagination,
   initialError,
 }: {
   initialConsultations: Consultation[];
+  initialPagination: PaginationMeta;
   initialError: string | null;
 }) {
   const [consultations, setConsultations] =
     useState<Consultation[]>(initialConsultations);
+  const [pagination, setPagination] =
+    useState<PaginationMeta>(initialPagination);
   const [loadError, setLoadError] = useState<string | null>(initialError);
 
   const loadConsultations = useCallback(async () => {
     try {
-      setConsultations(await fetchConsultations());
+      const result = await fetchConsultations(
+        pagination.page,
+        pagination.pageSize,
+      );
+      setConsultations(result.consultations);
+      setPagination(result.pagination);
       setLoadError(null);
     } catch (error: unknown) {
       setLoadError(
@@ -51,7 +70,7 @@ export function ConsultationList({
           : "Could not load consultations.",
       );
     }
-  }, []);
+  }, [pagination.page, pagination.pageSize]);
 
   if (loadError && consultations.length === 0) {
     return (
@@ -106,6 +125,7 @@ export function ConsultationList({
         consultations={consultations}
         onChanged={loadConsultations}
       />
+      <DataPagination basePath="/dashboard" pagination={pagination} />
     </div>
   );
 }

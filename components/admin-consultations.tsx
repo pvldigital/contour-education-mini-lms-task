@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 
 import { AdminConsultationsTable } from "@/components/admin-consultations-table";
+import { DataPagination } from "@/components/data-pagination";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,38 +11,56 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
+import type { PaginationMeta } from "@/lib/pagination";
 import type { AdminConsultation } from "@/lib/types";
 
-async function fetchAdminConsultations() {
-  const response = await fetch("/api/admin/consultations", {
+async function fetchAdminConsultations(page: number, pageSize: number) {
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+  const response = await fetch(`/api/admin/consultations?${params}`, {
     cache: "no-store",
   });
   const payload = (await response.json().catch(() => null)) as {
     consultations?: AdminConsultation[];
+    pagination?: PaginationMeta;
     error?: string;
   } | null;
 
-  if (!response.ok) {
+  if (!response.ok || !payload?.pagination) {
     throw new Error(payload?.error ?? "Could not load consultations.");
   }
 
-  return payload?.consultations ?? [];
+  return {
+    consultations: payload.consultations ?? [],
+    pagination: payload.pagination,
+  };
 }
 
 export function AdminConsultations({
   initialConsultations,
+  initialPagination,
   initialError,
 }: {
   initialConsultations: AdminConsultation[];
+  initialPagination: PaginationMeta;
   initialError: string | null;
 }) {
   const [consultations, setConsultations] =
     useState<AdminConsultation[]>(initialConsultations);
+  const [pagination, setPagination] =
+    useState<PaginationMeta>(initialPagination);
   const [error, setError] = useState<string | null>(initialError);
 
   const loadConsultations = useCallback(async () => {
     try {
-      setConsultations(await fetchAdminConsultations());
+      const result = await fetchAdminConsultations(
+        pagination.page,
+        pagination.pageSize,
+      );
+      setConsultations(result.consultations);
+      setPagination(result.pagination);
       setError(null);
     } catch (error: unknown) {
       setError(
@@ -50,7 +69,7 @@ export function AdminConsultations({
           : "Could not load consultations.",
       );
     }
-  }, []);
+  }, [pagination.page, pagination.pageSize]);
 
   if (error && consultations.length === 0) {
     return (
@@ -96,11 +115,8 @@ export function AdminConsultations({
           {error}
         </p>
       ) : null}
-      <p className="text-sm text-muted-foreground">
-        {consultations.length} consultation
-        {consultations.length === 1 ? "" : "s"}
-      </p>
       <AdminConsultationsTable consultations={consultations} />
+      <DataPagination basePath="/admin" pagination={pagination} />
     </div>
   );
 }

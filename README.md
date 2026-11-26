@@ -37,7 +37,7 @@ Browser
 ```
 
 - Initial list data is loaded by the guarded server page through shared query helpers.
-- GET APIs handle refreshes and future pagination; mutations use `POST`/`PATCH`.
+- GET APIs handle refreshes and pagination; mutations use `POST`/`PATCH`.
 - Server pages call `requireStudent()` or `requireAdmin()` before rendering.
 - RLS is the final row-level boundary, independent of the UI.
 - Admin access is SELECT-only at both the API and database layers.
@@ -261,7 +261,7 @@ Responses use `{ consultation }` or `{ consultations }`; errors use `{ error: st
 | 409 | Invalid state transition |
 | 500 | Database failure |
 
-Both list endpoints are currently unpaginated. Rows follow API order; column sorting is intentionally not exposed. Pagination is the next planned improvement.
+Both list endpoints are paginated with `page` and `pageSize` query parameters. `pageSize` defaults to 10 and is capped at 50. Responses include a `pagination` object with `page`, `pageSize`, `total`, and `totalPages`. Rows follow API order; column sorting is intentionally not exposed.
 
 ## Validation
 
@@ -293,7 +293,7 @@ Some `supabase-js` versions log an “insecure user object” warning when `getC
 
 ### API-first reads and writes
 
-Initial list data is loaded in the guarded Server Component through shared query helpers, so the first paint already contains the table data. GET APIs remain available for refreshes, actions, and upcoming pagination/filtering. This hybrid avoids the initial client-fetch waterfall without duplicating query logic; API routes and pages call the same query helpers.
+Initial list data is loaded in the guarded Server Component through shared query helpers, so the first paint already contains the table data. Pagination is URL-driven (`?page=N`) and server-rendered; GET APIs remain available for refreshes after actions and future filtering. This hybrid avoids the initial client-fetch waterfall without duplicating query logic; API routes and pages call the same query helpers.
 
 ### Single status field
 
@@ -312,11 +312,11 @@ Zod + React Hook Form centralise form rules and field errors; the API reuses the
 ## Assumptions and limitations
 
 - One role per user; one student per consultation.
-- No organisations, notifications, hard deletes, filters, or pagination yet.
+- No organisations, notifications, hard deletes, or filters yet.
 - Storage is UTC; the UI displays the viewer's local time and interprets `datetime-local` inputs in the browser timezone.
 - No automated test suite; verification uses lint/build, SQL/API checks, and the manual matrix below.
 - `cacheComponents` is disabled because authenticated pages read cookies; enabling it requires Suspense boundaries around session reads.
-- Admin list reads all rows; this is acceptable for a mini app but should be paginated as data grows.
+- Lists are paginated at 10 rows per page; the admin list reads only the current page.
 - The local seed is coupled to the local Auth schema and must remain local-only.
 - The session cookie is not `HttpOnly` because browser auth needs to read it; CSP limits XSS impact. Add API rate limiting as a follow-up.
 - The local PostgREST retag workaround is environment-specific.
@@ -380,7 +380,7 @@ supabase/seed.sql                 local-only demo data
 
 ## Future work
 
-- Pagination/filtering for both consultation lists.
+- Filtering for both consultation lists.
 - Automated auth/RLS/API tests and a CI quality gate.
 - Request-level caching of session/profile lookups.
 - Optional audit/event history for consultation state changes.

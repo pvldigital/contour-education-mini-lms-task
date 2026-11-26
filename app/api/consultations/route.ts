@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 
 import { getProfile, getSessionUser } from "@/lib/auth";
 import { parseBookingInput } from "@/lib/consultations";
+import { parsePage, parsePageSize } from "@/lib/pagination";
 import { getStudentConsultations } from "@/lib/queries/consultations";
 import { createClient } from "@/lib/supabase/server";
 
-export async function GET() {
+export async function GET(request: Request) {
   const user = await getSessionUser();
 
   if (!user) {
@@ -25,13 +26,19 @@ export async function GET() {
     );
   }
 
-  const { consultations, error } = await getStudentConsultations(user.id);
+  const { searchParams } = new URL(request.url);
+  const page = parsePage(searchParams.get("page"));
+  const pageSize = parsePageSize(searchParams.get("pageSize"));
+  const { consultations, pagination, error } = await getStudentConsultations(
+    user.id,
+    { page, pageSize },
+  );
 
   if (error) {
     return NextResponse.json({ error }, { status: 500 });
   }
 
-  return NextResponse.json({ consultations });
+  return NextResponse.json({ consultations, pagination });
 }
 
 export async function POST(request: Request) {

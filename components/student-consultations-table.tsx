@@ -7,7 +7,7 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
-import { Fragment, useState } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 
 import { ConsultationStatusBadge } from "@/components/consultation-status-badge";
 import { RescheduleForm } from "@/components/reschedule-form";
@@ -19,7 +19,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
 import {
   Table,
   TableBody,
@@ -62,7 +61,7 @@ export function StudentConsultationsTable({
   const [error, setError] = useState<string | null>(null);
   const isPending = pendingId !== null;
 
-  const setStatus = async (
+  const setStatus = useCallback(async (
     consultation: Consultation,
     status: "scheduled" | "completed",
   ) => {
@@ -81,14 +80,14 @@ export function StudentConsultationsTable({
     } finally {
       setPendingId(null);
     }
-  };
+  }, [onChanged]);
 
-  const openReschedule = (consultation: Consultation) => {
+  const openReschedule = useCallback((consultation: Consultation) => {
     setError(null);
     setRescheduleId(consultation.id);
-  };
+  }, []);
 
-  const handleReschedule = async (
+  const handleReschedule = useCallback(async (
     scheduledAt: string,
     consultation: Consultation,
   ) => {
@@ -108,9 +107,9 @@ export function StudentConsultationsTable({
     } finally {
       setPendingId(null);
     }
-  };
+  }, [onChanged]);
 
-  const cancelConsultation = async (consultation: Consultation) => {
+  const cancelConsultation = useCallback(async (consultation: Consultation) => {
     if (!window.confirm("Cancel this consultation?")) {
       return;
     }
@@ -131,9 +130,9 @@ export function StudentConsultationsTable({
     } finally {
       setPendingId(null);
     }
-  };
+  }, [onChanged]);
 
-  const columns: ColumnDef<Consultation>[] = [
+  const columns = useMemo<ColumnDef<Consultation>[]>(() => [
     {
       id: "name",
       accessorFn: (row) => `${row.first_name} ${row.last_name}`,
@@ -241,7 +240,7 @@ export function StudentConsultationsTable({
         );
       },
     },
-  ];
+  ], [isPending, setStatus, openReschedule, cancelConsultation]);
 
   const table = useReactTable({
     data: consultations,

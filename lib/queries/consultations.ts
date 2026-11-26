@@ -1,40 +1,76 @@
+import {
+  paginationMeta,
+  paginationRange,
+  type PaginationMeta,
+} from "@/lib/pagination";
 import { createClient } from "@/lib/supabase/server";
 import type { AdminConsultation, Consultation } from "@/lib/types";
 
-export async function getStudentConsultations(studentId: string): Promise<{
+type PageParams = {
+  page: number;
+  pageSize: number;
+};
+
+export async function getStudentConsultations(
+  studentId: string,
+  { page, pageSize }: PageParams,
+): Promise<{
   consultations: Consultation[];
+  pagination: PaginationMeta;
   error: string | null;
 }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { from, to } = paginationRange(page, pageSize);
+  const { data, error, count } = await supabase
     .from("consultations")
     .select(
       "id, student_id, first_name, last_name, reason, scheduled_at, status, created_at",
+      { count: "exact" },
     )
     .eq("student_id", studentId)
-    .order("scheduled_at", { ascending: true });
+    .order("scheduled_at", { ascending: true })
+    .range(from, to);
 
   if (error) {
-    return { consultations: [], error: "Could not load consultations." };
+    return {
+      consultations: [],
+      pagination: paginationMeta(0, page, pageSize),
+      error: "Could not load consultations.",
+    };
   }
 
-  return { consultations: data ?? [], error: null };
+  return {
+    consultations: data ?? [],
+    pagination: paginationMeta(count ?? 0, page, pageSize),
+    error: null,
+  };
 }
 
-export async function getAdminConsultations(): Promise<{
+export async function getAdminConsultations({
+  page,
+  pageSize,
+}: PageParams): Promise<{
   consultations: AdminConsultation[];
+  pagination: PaginationMeta;
   error: string | null;
 }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { from, to } = paginationRange(page, pageSize);
+  const { data, error, count } = await supabase
     .from("consultations")
     .select(
       "id, student_id, first_name, last_name, reason, scheduled_at, status, created_at, profiles(email)",
+      { count: "exact" },
     )
-    .order("scheduled_at", { ascending: false });
+    .order("scheduled_at", { ascending: false })
+    .range(from, to);
 
   if (error) {
-    return { consultations: [], error: "Could not load consultations." };
+    return {
+      consultations: [],
+      pagination: paginationMeta(0, page, pageSize),
+      error: "Could not load consultations.",
+    };
   }
 
   const consultations: AdminConsultation[] = (data ?? []).map((row) => {
@@ -55,5 +91,9 @@ export async function getAdminConsultations(): Promise<{
     };
   });
 
-  return { consultations, error: null };
+  return {
+    consultations,
+    pagination: paginationMeta(count ?? 0, page, pageSize),
+    error: null,
+  };
 }

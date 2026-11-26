@@ -1,13 +1,31 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { ConsultationList } from "@/components/consultation-list";
 import { Button } from "@/components/ui/button";
 import { requireStudent } from "@/lib/auth";
+import { DEFAULT_PAGE_SIZE, parsePage } from "@/lib/pagination";
 import { getStudentConsultations } from "@/lib/queries/consultations";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const { user } = await requireStudent();
-  const { consultations, error } = await getStudentConsultations(user.id);
+  const page = parsePage((await searchParams).page);
+  const { consultations, pagination, error } = await getStudentConsultations(
+    user.id,
+    { page, pageSize: DEFAULT_PAGE_SIZE },
+  );
+
+  if (page !== pagination.page || page > pagination.totalPages) {
+    redirect(
+      pagination.totalPages === 1
+        ? "/dashboard"
+        : `/dashboard?page=${pagination.totalPages}`,
+    );
+  }
 
   return (
     <div className="mx-auto flex flex-col gap-6">
@@ -24,7 +42,9 @@ export default async function DashboardPage() {
       </div>
 
       <ConsultationList
+        key={pagination.page}
         initialConsultations={consultations}
+        initialPagination={pagination}
         initialError={error}
       />
     </div>
