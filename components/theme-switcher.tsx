@@ -22,7 +22,7 @@ const ThemeSwitcher = () => {
   }, []);
 
   if (!mounted) {
-    return null;
+    return <div className="size-8" aria-hidden="true" />;
   }
 
   const ICON_SIZE = 16;
@@ -30,7 +30,11 @@ const ThemeSwitcher = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size={"sm"}>
+        <Button
+          variant="ghost"
+          size={"sm"}
+          aria-label={`Change theme. Current theme: ${theme ?? "system"}`}
+        >
           {theme === "light" ? (
             <Sun
               key="light"

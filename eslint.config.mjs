@@ -12,8 +12,11 @@ const compat = new FlatCompat({
 const eslintConfig = [
   {
     ignores: [
+      ".agents/**",
+      ".claude/**",
       ".next/**",
       ".pnpm-store/**",
+      ".reasonix/**",
       ".supabase-home/**",
       "node_modules/**",
       "next-env.d.ts",

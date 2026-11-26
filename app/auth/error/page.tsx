@@ -1,51 +1,26 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Suspense } from "react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
-async function ErrorContent({
+export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ error: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
-  const params = await searchParams;
+  const { error } = await searchParams;
 
   return (
-    <>
-      {params?.error ? (
+    <Card>
+      <CardHeader>
+        <h1 className="text-2xl font-semibold leading-none tracking-tight">
+          Sorry, something went wrong.
+        </h1>
+      </CardHeader>
+      <CardContent>
         <p className="text-sm text-muted-foreground">
-          Code error: {params.error}
+          {error
+            ? "We could not complete that request. Please try again."
+            : "An unspecified error occurred. Please try again."}
         </p>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          An unspecified error occurred.
-        </p>
-      )}
-    </>
-  );
-}
-
-export default function Page({
-  searchParams,
-}: {
-  searchParams: Promise<{ error: string }>;
-}) {
-  return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">
-                Sorry, something went wrong.
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Suspense>
-                <ErrorContent searchParams={searchParams} />
-              </Suspense>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

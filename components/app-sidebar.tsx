@@ -12,16 +12,19 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { MobileNavigation, type NavItem } from "@/components/mobile-navigation";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import type { AppRole } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const baseNav = [
+const baseNav: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/consultations/new", label: "Book consultation", icon: CalendarPlus },
 ];
+
+const adminNav: NavItem[] = [{ href: "/admin", label: "Admin", icon: ShieldCheck }]
 
 export function AppSidebar({
   email,
@@ -36,7 +39,7 @@ export function AppSidebar({
 
   const nav =
     role === "admin"
-      ? [...baseNav, { href: "/admin", label: "Admin", icon: ShieldCheck }]
+      ? adminNav
       : baseNav;
 
   const logout = async () => {
@@ -48,8 +51,9 @@ export function AppSidebar({
 
   return (
     <aside
+      id="app-sidebar"
       className={cn(
-        "sticky top-0 flex h-svh shrink-0 flex-col border-r bg-background transition-[width] duration-200",
+        "sticky top-0 flex h-svh shrink-0 flex-col border-r bg-background transition-[width] duration-200 motion-reduce:transition-none",
         collapsed ? "w-16" : "w-64",
         "max-md:w-16",
       )}
@@ -57,15 +61,16 @@ export function AppSidebar({
       <div className="flex h-16 items-center gap-2 border-b px-3">
         <Link
           href="/dashboard"
+          aria-label="Mini LMS dashboard"
           className={cn(
-            "flex min-w-0 items-center gap-2 font-semibold",
+            "flex min-w-0 items-center gap-2 font-semibold max-md:hidden",
             collapsed && "hidden",
           )}
         >
           <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-sm text-primary-foreground">
             M
           </span>
-          <span className="truncate max-md:hidden">Mini LMS</span>
+          <span className="truncate">Mini LMS</span>
         </Link>
         <Button
           type="button"
@@ -77,12 +82,27 @@ export function AppSidebar({
           )}
           onClick={() => setCollapsed((value) => !value)}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!collapsed}
+          aria-controls="app-sidebar"
         >
-          {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+          {collapsed ? (
+            <PanelLeftOpen aria-hidden="true" />
+          ) : (
+            <PanelLeftClose aria-hidden="true" />
+          )}
         </Button>
+        <MobileNavigation
+          nav={nav}
+          email={email}
+          role={role}
+          onLogout={logout}
+        />
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto p-2">
+      <nav
+        aria-label="Main navigation"
+        className="flex-1 space-y-1 overflow-y-auto p-2"
+      >
         {nav.map(({ href, label, icon: Icon }) => {
           const active =
             pathname === href || pathname.startsWith(`${href}/`);
@@ -91,16 +111,23 @@ export function AppSidebar({
             <Link
               key={href}
               href={href}
-              title={label}
+              title={collapsed ? label : undefined}
+              aria-label={label}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground max-md:justify-center max-md:px-0",
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-md:justify-center max-md:px-0",
                 active && "bg-accent text-accent-foreground",
                 collapsed && "justify-center px-0",
               )}
             >
-              <Icon className="size-4 shrink-0" />
-              <span className={cn("truncate", collapsed && "hidden", "max-md:hidden")}>
+              <Icon className="size-4 shrink-0" aria-hidden="true" />
+              <span
+                className={cn(
+                  "truncate",
+                  collapsed && "hidden",
+                  "max-md:hidden",
+                )}
+              >
                 {label}
               </span>
             </Link>
@@ -131,10 +158,10 @@ export function AppSidebar({
             variant="ghost"
             size="icon"
             onClick={logout}
-            aria-label="Log out"
-            title="Log out"
+            aria-label="Logout"
+            title="Logout"
           >
-            <LogOut />
+            <LogOut aria-hidden="true" />
           </Button>
         </div>
       </div>
