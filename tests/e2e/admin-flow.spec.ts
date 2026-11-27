@@ -26,7 +26,7 @@ test("student is redirected from admin and rejected by admin APIs", async ({
   page,
 }) => {
   await login(page, "student@example.com");
-  await page.goto("/admin");
+  await page.goto("/admin/consultations");
   await expect(page).toHaveURL(/\/dashboard$/);
 
   const response = await page.request.get("/api/admin/consultations");

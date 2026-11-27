@@ -116,7 +116,7 @@ export function AdminConsultations({
         </p>
       ) : null}
       <AdminConsultationsTable consultations={consultations} />
-      <DataPagination basePath="/admin" pagination={pagination} />
+      <DataPagination basePath="/admin/consultations" pagination={pagination} />
     </div>
   );
 }

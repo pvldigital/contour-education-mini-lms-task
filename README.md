@@ -172,10 +172,10 @@ Migration `20261126210906_consolidate_consultation_status.sql` backfills `comple
 
 - One role per user and one student per consultation.
 - No organisations, notifications, hard deletes, or filters.
-- Storage is UTC; the UI displays the viewer’s local time and interprets `datetime-local` input in the browser timezone.
+- The datetime is stored in UTC. The UI displays the users local time and interprets `datetime-local` input in the browser timezone.
 - The local seed inserts into the local Supabase Auth schema and must remain local-only.
-- Unit, RLS, and two Playwright smoke suites run locally and in CI; broader manual QA still covers auth recovery and edge cases.
-- The `getClaims()` “insecure user object” warning is a known false positive; auth is not weakened to silence it.
+- Unit, RLS, and two Playwright smoke suites run locally and in CI. Further tests is recommended but overkill for this assignment.
+- The `getClaims()` “insecure user object” warning is a known false positive.
 
 ## Summary of the overall implementation
 
@@ -190,29 +190,29 @@ Migration `20261126210906_consolidate_consultation_status.sql` backfills `comple
 Key paths:
 
 ```text
-app/(app)/layout.tsx             authenticated shell and sidebar
-app/(app)/dashboard/page.tsx     student consultation list
-app/(app)/consultations/new/     separate booking page
-app/(app)/admin/page.tsx         admin-only read-only list
-app/api/consultations/route.ts   GET own list; POST create
-app/api/admin/consultations/...  GET all consultations (admin)
-app/api/consultations/[id]/      PATCH status/reschedule
-app/auth/*                       auth pages and confirmation
-lib/queries/*                    shared server list queries
-lib/pagination/*                 page metadata/range helpers
-lib/schemas/*                    shared Zod schemas
-lib/auth.ts                      session/profile/role guards
-lib/security/csp.ts              per-request nonce CSP
-components/*-table.tsx           student/admin DataTables
-components/*-form.tsx            React Hook Form forms
-supabase/migrations/             schema, indexes, triggers, RLS
-supabase/seed.sql                local-only demo data
+app/(app)/layout.tsx                        authenticated shell and sidebar
+app/(app)/dashboard/page.tsx                student consultation list
+app/(app)/consultations/new/                separate booking page
+app/(app)/admin/consultations/page.tsx      admin-only read-only consultations list
+app/api/consultations/route.ts              GET own list; POST create
+app/api/admin/consultations/...             GET all consultations (admin)
+app/api/consultations/[id]/                 PATCH status/reschedule
+app/auth/*                                  auth pages and confirmation
+lib/queries/*                               shared server list queries
+lib/pagination/*                            page metadata/range helpers
+lib/schemas/*                               shared Zod schemas
+lib/auth.ts                                 session/profile/role guards
+lib/security/csp.ts                         per-request nonce CSP
+components/*-table.tsx                      student/admin DataTables
+components/*-form.tsx                       React Hook Form forms
+supabase/migrations/                        schema, indexes, triggers, RLS
+supabase/seed.sql                           local-only demo data
 ```
 
 ### Features
 
 - Email/password sign-up, login, logout, forgot/update password.
-- Role-aware redirects: admins to `/admin`, students to `/dashboard`.
+- Role-aware redirects: admins to `/admin/consultations`, students to `/dashboard`.
 - Students create, list, complete/incomplete, reschedule, and cancel their own consultations.
 - Admin read-only view of all consultations with student email.
 - Paginated lists with page/total metadata and stable ordering.

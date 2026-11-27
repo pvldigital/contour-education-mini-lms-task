@@ -95,12 +95,6 @@ export function LoginForm({
               <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </Link>
                 </div>
                 <Input
                   id="password"
@@ -139,6 +133,15 @@ export function LoginForm({
                 Sign up
               </Link>
             </div>
+            <div className="mt-2 text-center text-sm">
+              <Link
+                href="/auth/forgot-password"
+                className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+              >
+                Forgot your password?
+              </Link>
+            </div>
+
           </form>
         </CardContent>
       </Card>

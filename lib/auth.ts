@@ -57,7 +57,7 @@ export async function requireStudent(): Promise<{
   const profile = await getProfile(user.id);
 
   if (profile?.role === "admin") {
-    redirect("/admin");
+    redirect("/admin/consultations");
   }
 
   return { user, profile };

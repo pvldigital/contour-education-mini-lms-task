@@ -20,8 +20,8 @@ export default async function AdminPage({
   if (page !== pagination.page || page > pagination.totalPages) {
     redirect(
       pagination.totalPages === 1
-        ? "/admin"
-        : `/admin?page=${pagination.totalPages}`,
+        ? "/admin/consultations"
+        : `/admin/consultations?page=${pagination.totalPages}`,
     );
   }
 
