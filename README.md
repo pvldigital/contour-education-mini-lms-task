@@ -1,6 +1,6 @@
 # Mini LMS
 
-A small consultation-booking LMS built with Next.js App Router, TypeScript, and Supabase.
+A small consultation-booking LMS built with Next.js App Router, TypeScript, and Supabase. Used the recommended next-app create with supabase example as the starting point.
 
 ## Special setup instructions
 
