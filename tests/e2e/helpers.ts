@@ -17,5 +17,5 @@ export async function login(page: Page, email: string) {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(seedPassword);
   await page.getByRole("button", { name: "Login" }).click();
-  await expect(page).toHaveURL(/\/(dashboard|admin)$/);
+  await expect(page).toHaveURL(/\/(dashboard|consultations)$/);
 }
