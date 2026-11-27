@@ -8,7 +8,10 @@ test("student can book and manage their own consultation", async ({
   const reason = `E2E consultation ${Date.now()}`;
 
   await login(page, "student@example.com");
-  await page.getByRole("link", { name: "Book consultation" }).click();
+  await page
+    .locator("#main-content")
+    .getByRole("link", { name: "Book consultation" })
+    .click();
   await page.getByLabel("First name").fill("E2E");
   await page.getByLabel("Last name").fill("Student");
   await page.getByLabel("Reason for consultation").fill(reason);
