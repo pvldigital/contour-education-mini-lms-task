@@ -93,9 +93,7 @@ export function LoginForm({
                 <FieldError id="email-error" message={errors.email?.message} />
               </div>
               <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                </div>
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
@@ -136,12 +134,11 @@ export function LoginForm({
             <div className="mt-2 text-center text-sm">
               <Link
                 href="/auth/forgot-password"
-                className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                className="inline-block text-sm underline-offset-4 hover:underline"
               >
                 Forgot your password?
               </Link>
             </div>
-
           </form>
         </CardContent>
       </Card>

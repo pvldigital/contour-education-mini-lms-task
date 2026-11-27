@@ -25,7 +25,7 @@ const baseNav: NavItem[] = [
 ];
 
 const adminNav: NavItem[] = [
-  { href: "/admin/consultations", label: "Consultations", icon: ShieldCheck },
+  { href: "/admin/consultations", label: "All consultations", icon: ShieldCheck },
 ];
 
 export function AppSidebar({

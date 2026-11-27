@@ -1,6 +1,6 @@
 # Mini LMS
 
-A small consultation-booking LMS built with Next.js App Router, TypeScript, and Supabase. Used the recommended next-app create with supabase example as the starting point.
+A small consultation-booking LMS built with Next.js App Router, TypeScript, and Supabase, started from the recommended Next.js + Supabase starter.
 
 ## Special setup instructions
 
@@ -172,9 +172,9 @@ Migration `20261126210906_consolidate_consultation_status.sql` backfills `comple
 
 - One role per user and one student per consultation.
 - No organisations, notifications, hard deletes, or filters.
-- The datetime is stored in UTC. The UI displays the users local time and interprets `datetime-local` input in the browser timezone.
+- The datetime is stored in UTC. The UI displays the user's local time and interprets `datetime-local` input in the browser timezone.
 - The local seed inserts into the local Supabase Auth schema and must remain local-only.
-- Unit, RLS, and two Playwright smoke suites run locally and in CI. Further tests is recommended but overkill for this assignment.
+- Unit, RLS, and two Playwright smoke suites run locally and in CI. Further tests are recommended but would be overkill for this assignment.
 - The `getClaims()` “insecure user object” warning is a known false positive.
 
 ## Summary of the overall implementation
@@ -193,6 +193,7 @@ Key paths:
 app/(app)/layout.tsx                        authenticated shell and sidebar
 app/(app)/dashboard/page.tsx                student consultation list
 app/(app)/consultations/new/                separate booking page
+app/(app)/admin/page.tsx                    /admin compatibility redirect
 app/(app)/admin/consultations/page.tsx      admin-only read-only consultations list
 app/api/consultations/route.ts              GET own list; POST create
 app/api/admin/consultations/...             GET all consultations (admin)
@@ -212,7 +213,7 @@ supabase/seed.sql                           local-only demo data
 ### Features
 
 - Email/password sign-up, login, logout, forgot/update password.
-- Role-aware redirects: admins to `/admin/consultations`, students to `/dashboard`.
+- Role-aware redirects: admins to `/admin/consultations`, students to `/dashboard`; `/admin` redirects to `/admin/consultations`.
 - Students create, list, complete/incomplete, reschedule, and cancel their own consultations.
 - Admin read-only view of all consultations with student email.
 - Paginated lists with page/total metadata and stable ordering.

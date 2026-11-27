@@ -6,6 +6,8 @@ test("admin sees all consultations and no mutation controls", async ({
   page,
 }) => {
   await login(page, "admin@example.com");
+  await page.goto("/admin");
+  await expect(page).toHaveURL(/\/admin\/consultations$/);
   await expect(page.getByRole("heading", { name: "Admin" })).toBeVisible();
   await expect(page.getByText("All consultations across the system")).toBeVisible();
   await expect(
@@ -26,6 +28,8 @@ test("student is redirected from admin and rejected by admin APIs", async ({
   page,
 }) => {
   await login(page, "student@example.com");
+  await page.goto("/admin");
+  await expect(page).toHaveURL(/\/dashboard$/);
   await page.goto("/admin/consultations");
   await expect(page).toHaveURL(/\/dashboard$/);
 
